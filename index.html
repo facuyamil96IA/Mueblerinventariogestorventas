@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario y Ventas MLF Muebles la familia</title>
+    <!-- Importar la fuente Inter de Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Importar Tailwind CSS para estilos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos básicos y fuente */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            color: #374151;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px; /* Ancho máximo para simular un smartphone */
+            background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 24px;
+        }
+
+        /* Estilos de navegación con pestañas */
+        .tab-nav {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 0;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            color: #6b7280;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            transition: color 0.2s ease, border-bottom 0.2s ease;
+        }
+
+        .tab-btn.active {
+            color: #3b82f6;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        /* Estilos de los formularios e inputs */
+        .inventory-form, .sales-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4b5563;
+        }
+
+        .form-input {
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 9999px; /* Bordes totalmente redondeados */
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .form-textarea {
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 1rem;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            resize: vertical;
+        }
+        
+        .form-select {
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 9999px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background-color: white;
+            appearance: none; /* Elimina la flecha predeterminada en algunos navegadores */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.25rem;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        .add-button {
+            padding: 12px 20px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .add-button:hover {
+            background-color: #2563eb;
+        }
+
+        .add-button:active {
+            transform: scale(0.98);
+        }
+
+        /* Estilos para el listado de inventario y ventas */
+        .inventory-list, .sales-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .inventory-item, .sales-item {
+            display: flex;
+            flex-direction: column;
+            background-color: #f9fafb;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .item-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .item-sku {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .item-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+        
+        .sales-item .item-actions {
+            justify-content: flex-end;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quantity-btn {
+            background-color: #e5e7eb;
+            color: #4b5563;
+            border: none;
+            border-radius: 9999px;
+            width: 32px;
+            height: 32px;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .quantity-btn:hover {
+            background-color: #d1d5db;
+        }
+
+        .item-quantity {
+            font-size: 1.25rem;
+            font-weight: 700;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .delete-button {
+            background-color: transparent;
+            border: none;
+            color: #ef4444;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 9999px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .delete-button:hover {
+            background-color: #fee2e2;
+        }
+
+        .csv-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .csv-button {
+            flex-grow: 1;
+            padding: 12px 20px;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .csv-button:hover {
+            background-color: #059669;
+        }
+
+        .csv-button:active {
+            transform: scale(0.98);
+        }
+
+        /* Estilos para la sección de detalles adicionales */
+        .item-details {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        .item-details.show {
+            display: flex;
+        }
+
+        .details-toggle-btn {
+            background-color: transparent;
+            border: none;
+            color: #4b5563;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            align-self: flex-start;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            transition: background-color 0.2s ease;
+        }
+
+        .details-toggle-btn:hover {
+            background-color: #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Inventario MLF Muebles la familia</h1>
+        
+        <!-- Muestra el ID de usuario para identificar los datos -->
+        <div id="userIdDisplay" class="text-xs text-center text-gray-500 mb-4 break-words"></div>
+
+        <!-- Navegación de pestañas -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="inventoryTab">Inventario</button>
+            <button class="tab-btn" data-tab="salesTab">Gestor de Ventas</button>
+        </div>
+
+        <!-- Contenido de la pestaña de Inventario -->
+        <div id="inventoryTab" class="tab-content">
+            <!-- Campo de búsqueda -->
+            <div class="form-group mb-6">
+                <label for="searchInput" class="sr-only">Buscar artículo</label>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="form-input" 
+                    placeholder="Buscar por nombre o SKU..." 
+                />
+            </div>
+
+            <!-- Formulario para agregar nuevos artículos -->
+            <form id="inventoryForm" class="inventory-form">
+                <div class="form-group">
+                    <label for="productName">Nombre del producto</label>
+                    <input 
+                        type="text" 
+                        id="productName" 
+                        class="form-input" 
+                        placeholder="Silla de oficina..." 
+                        required 
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="sku">SKU</label>
+                    <input 
+                        type="text" 
+                        id="sku" 
+                        class="form-input" 
+                        placeholder="SKU-12345" 
+                        required 
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="description">Descripción</label>
+                    <textarea 
+                        id="description" 
+                        class="form-textarea" 
+                        placeholder="Escribe una descripción detallada..."
+                        rows="3"
+                    ></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="cost">Costo</label>
+                    <input 
+                        type="number" 
+                        id="cost" 
+                        class="form-input" 
+                        value="0" 
+                        min="0" 
+                        required 
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="price">Precio</label>
+                    <input 
+                        type="number" 
+                        id="price" 
+                        class="form-input" 
+                        value="0" 
+                        min="0" 
+                        required 
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Cantidad inicial</label>
+                    <input 
+                        type="number" 
+                        id="quantity" 
+                        class="form-input" 
+                        value="1" 
+                        min="0" 
+                        required 
+                    />
+                </div>
+                <button type="submit" class="add-button">Añadir Mueble</button>
+            </form>
+            
+            <!-- Lista donde se mostrarán los artículos -->
+            <div id="inventoryList" class="inventory-list">
+                <p id="inventoryLoading" class="text-center text-gray-500">Cargando inventario...</p>
+            </div>
+
+            <!-- Botones para importar/exportar CSV -->
+            <div class="csv-actions">
+                <button type="button" id="exportCsvBtn" class="csv-button">Exportar Inventario CSV</button>
+                <label for="importCsvInput" class="csv-button text-center">Importar Inventario CSV</label>
+                <input type="file" id="importCsvInput" accept=".csv" class="hidden">
+            </div>
+        </div>
+
+        <!-- Contenido de la pestaña de Gestor de Ventas -->
+        <div id="salesTab" class="tab-content hidden">
+            <h2 class="text-xl font-bold mb-4">Registrar Venta</h2>
+            <form id="salesForm" class="sales-form">
+                <div id="salesItemsContainer">
+                    <div class="form-group flex-row items-center gap-2">
+                        <label for="itemSelect-0" class="sr-only">Producto</label>
+                        <select id="itemSelect-0" class="form-select w-full" required>
+                            <option value="" disabled selected>Selecciona un producto</option>
+                        </select>
+                        <label for="itemQuantity-0" class="sr-only">Cantidad</label>
+                        <input type="number" id="itemQuantity-0" class="form-input w-20" value="1" min="1" required>
+                    </div>
+                </div>
+                <button type="button" id="addSalesItemBtn" class="add-button bg-gray-200 text-gray-800 hover:bg-gray-300">
+                    Añadir otro artículo
+                </button>
+                
+                <div class="form-group">
+                    <label for="salesObservations">Observaciones (ej. Nombre y celular del cliente)</label>
+                    <textarea 
+                        id="salesObservations" 
+                        class="form-textarea" 
+                        placeholder="Escribe aquí los datos del cliente..."
+                        rows="3"
+                    ></textarea>
+                </div>
+
+                <button type="submit" class="add-button">Registrar Venta</button>
+            </form>
+            
+            <h2 class="text-xl font-bold mt-8 mb-4">Historial de Ventas</h2>
+            <div id="salesList" class="sales-list">
+                 <p id="salesLoading" class="text-center text-gray-500">Cargando historial de ventas...</p>
+            </div>
+            
+            <div class="csv-actions">
+                <button type="button" id="exportSalesCsvBtn" class="csv-button bg-blue-500 hover:bg-blue-600">Exportar Historial de Ventas CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            addDoc, 
+            setDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            collection 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Espera a que el DOM esté completamente cargado para ejecutar el script
+        window.onload = function() {
+            // --- Configuración de Firebase ---
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+            let userId = null;
+            
+            // --- Selecciona los elementos del DOM ---
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const inventoryForm = document.getElementById('inventoryForm');
+            const inventoryList = document.getElementById('inventoryList');
+            const searchInput = document.getElementById('searchInput');
+            const exportCsvBtn = document.getElementById('exportCsvBtn');
+            const importCsvInput = document.getElementById('importCsvInput');
+            const salesForm = document.getElementById('salesForm');
+            const salesList = document.getElementById('salesList');
+            const addSalesItemBtn = document.getElementById('addSalesItemBtn');
+            const salesItemsContainer = document.getElementById('salesItemsContainer');
+            const exportSalesCsvBtn = document.getElementById('exportSalesCsvBtn');
+            const userIdDisplay = document.getElementById('userIdDisplay');
+            const inventoryLoading = document.getElementById('inventoryLoading');
+            const salesLoading = document.getElementById('salesLoading');
+            
+            // Un contador para los campos de venta dinámicos
+            let salesItemCount = 1;
+
+            // --- Funciones de la aplicación ---
+
+            // Función para cambiar de pestaña
+            function switchTab(tabId) {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.add('hidden'));
+
+                const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
+                const activeContent = document.getElementById(tabId);
+                
+                if (activeBtn) activeBtn.classList.add('active');
+                if (activeContent) activeContent.classList.remove('hidden');
+
+                // Si cambiamos a la pestaña de ventas, actualizamos el selector de productos
+                if (tabId === 'salesTab' && userId) {
+                    populateSalesItems();
+                }
+            }
+
+            // Función para crear un nuevo elemento de artículo del inventario
+            function createInventoryItem(docId, name, sku, quantity, description = '', cost = 0, price = 0) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'inventory-item';
+                itemDiv.dataset.id = docId;
+                itemDiv.dataset.sku = sku;
+                itemDiv.dataset.name = name;
+                itemDiv.dataset.description = description;
+                itemDiv.dataset.cost = cost;
+                itemDiv.dataset.price = price;
+
+                itemDiv.innerHTML = `
+                    <div class="item-header">
+                        <span class="item-name">${name}</span>
+                        <span class="item-sku">SKU: ${sku}</span>
+                    </div>
+                    <div class="item-actions">
+                        <div class="quantity-control">
+                            <button type="button" class="quantity-btn minus-btn">-</button>
+                            <span class="item-quantity">${quantity}</span>
+                            <button type="button" class="quantity-btn plus-btn">+</button>
+                        </div>
+                        <button type="button" class="delete-button">Eliminar</button>
+                    </div>
+                    <button type="button" class="details-toggle-btn">Mostrar detalles</button>
+                    <div class="item-details">
+                        <p><strong>Descripción:</strong> ${description}</p>
+                        <p><strong>Costo:</strong> $${parseFloat(cost).toFixed(2)}</p>
+                        <p><strong>Precio:</strong> $${parseFloat(price).toFixed(2)}</p>
+                    </div>
+                `;
+                return itemDiv;
+            }
+            
+            // Función para crear un elemento de venta en el historial
+            function createSalesItem(docId, saleData) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'sales-item';
+                itemDiv.dataset.id = docId;
+                const totalSalePrice = saleData.products.reduce((total, product) => total + (product.price * product.quantity), 0);
+                const totalSaleCost = saleData.products.reduce((total, product) => total + (product.cost * product.quantity), 0);
+                const totalProfit = totalSalePrice - totalSaleCost;
+
+                itemDiv.innerHTML = `
+                    <div class="item-header">
+                        <span class="item-name">Venta</span>
+                        <span class="item-sku">${new Date(saleData.date).toLocaleString()}</span>
+                    </div>
+                    <div class="item-details show">
+                        <p><strong>Productos vendidos:</strong></p>
+                        <ul>
+                            ${saleData.products.map(p => `<li>- ${p.name} (${p.sku}) x${p.quantity} ($${(p.price * p.quantity).toFixed(2)})</li>`).join('')}
+                        </ul>
+                        <p><strong>Ganancia total:</strong> $${totalProfit.toFixed(2)}</p>
+                        ${saleData.observations ? `<p><strong>Observaciones:</strong> ${saleData.observations}</p>` : ''}
+                    </div>
+                `;
+                return itemDiv;
+            }
+
+            // Función para guardar una actualización en un documento de Firestore
+            async function updateInventoryItem(docId, data) {
+                try {
+                    const docRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, docId);
+                    await updateDoc(docRef, data);
+                } catch (e) {
+                    console.error("Error updating document: ", e);
+                }
+            }
+
+            // Función para eliminar un documento de Firestore
+            async function deleteInventoryItem(docId) {
+                try {
+                    const docRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, docId);
+                    await deleteDoc(docRef);
+                } catch (e) {
+                    console.error("Error deleting document: ", e);
+                }
+            }
+
+            // Función para exportar los datos del inventario a un archivo CSV
+            async function exportInventoryToCsv() {
+                if (!userId) {
+                    showErrorMessage('Espera a que los datos se carguen para exportar.');
+                    return;
+                }
+                try {
+                    const inventoryCollection = collection(db, `artifacts/${appId}/users/${userId}/inventory`);
+                    const snapshot = await getDocs(inventoryCollection);
+                    let csvContent = "Nombre,SKU,Descripción,Costo,Precio,Cantidad\n"; // Encabezado del CSV
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const sanitizedDescription = data.description.replace(/"/g, '""');
+                        csvContent += `${data.name},${data.sku},"${sanitizedDescription}",${data.cost},${data.price},${data.quantity}\n`;
+                    });
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'inventario_muebles.csv');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (e) {
+                    console.error("Error al exportar el inventario CSV:", e);
+                    showErrorMessage('Error al exportar el inventario.');
+                }
+            }
+            
+            // Función para exportar los datos de las ventas a un archivo CSV
+            async function exportSalesToCsv() {
+                if (!userId) {
+                    showErrorMessage('Espera a que los datos se carguen para exportar.');
+                    return;
+                }
+                try {
+                    const salesCollection = collection(db, `artifacts/${appId}/users/${userId}/sales`);
+                    const snapshot = await getDocs(salesCollection);
+                    
+                    if (snapshot.empty) {
+                        showErrorMessage('No hay datos de ventas para exportar.');
+                        return;
+                    }
+
+                    let csvContent = "Fecha,Ganancia Total,Observaciones,Productos Vendidos\n"; // Encabezado del CSV
+
+                    snapshot.forEach(doc => {
+                        const sale = doc.data();
+                        const saleDate = new Date(sale.date).toLocaleString();
+                        const totalSaleCost = sale.products.reduce((total, p) => total + (p.cost * p.quantity), 0);
+                        const totalSalePrice = sale.products.reduce((total, p) => total + (p.price * p.quantity), 0);
+                        const totalProfit = totalSalePrice - totalSaleCost;
+                        const observations = sale.observations ? sale.observations.replace(/"/g, '""') : '';
+                        
+                        const productsString = sale.products.map(p => 
+                            `${p.name} (SKU: ${p.sku}, Cantidad: ${p.quantity})`
+                        ).join('; ');
+                        
+                        csvContent += `"${saleDate}",${totalProfit.toFixed(2)},"${observations}","${productsString}"\n`;
+                    });
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'historial_ventas.csv');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (e) {
+                    console.error("Error al exportar el historial de ventas CSV:", e);
+                    showErrorMessage('Error al exportar el historial de ventas.');
+                }
+            }
+
+            // Función para importar datos desde un archivo CSV
+            async function importFromCsv(file) {
+                if (!userId) {
+                    showErrorMessage('Por favor, espera a que la autenticación se complete.');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const text = e.target.result;
+                    const rows = text.split('\n');
+                    inventoryList.innerHTML = ''; // Limpiamos la lista para reconstruirla
+
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i].trim();
+                        if (row) {
+                             const parts = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+                            if (parts && parts.length === 6) {
+                                const [name, sku, description, cost, price, quantity] = parts.map(part => part.trim().replace(/^"|"$/g, ''));
+                                
+                                try {
+                                    // Añadimos el documento a Firestore
+                                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/inventory`), {
+                                        name,
+                                        sku,
+                                        description,
+                                        cost: parseFloat(cost),
+                                        price: parseFloat(price),
+                                        quantity: parseInt(quantity, 10)
+                                    });
+                                } catch (e) {
+                                    console.error("Error al importar el artículo:", e);
+                                    showErrorMessage('Error al importar un artículo del CSV.');
+                                }
+                            } else {
+                                console.error("Fila del CSV con formato incorrecto:", row);
+                            }
+                        }
+                    }
+                };
+                reader.readAsText(file);
+            }
+            
+            // Función para popular el select de productos en el formulario de ventas
+            function populateSalesItems(inventoryData) {
+                // Buscamos todos los select y los populamos
+                const selects = salesItemsContainer.querySelectorAll('.form-select');
+                selects.forEach(select => {
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="" disabled selected>Selecciona un producto</option>';
+                    if (inventoryData) {
+                        inventoryData.forEach(item => {
+                            const name = item.name;
+                            const sku = item.sku;
+                            const quantity = item.quantity;
+                            if (quantity > 0) {
+                                const option = document.createElement('option');
+                                option.value = item.docId; // Ahora el valor es el ID del documento
+                                option.textContent = `${name} (SKU: ${sku}, Cantidad: ${quantity})`;
+                                select.appendChild(option);
+                            }
+                        });
+                    }
+                    if (currentValue) {
+                        select.value = currentValue;
+                    }
+                });
+            }
+
+            // Función para mostrar mensajes de error/éxito
+            function showMessage(message, type = 'success') {
+                const messageBox = document.createElement('div');
+                messageBox.textContent = message;
+                let bgColor = '#10b981'; // Tailwind green-500
+                if (type === 'error') {
+                    bgColor = '#ef4444'; // Tailwind red-500
+                }
+                messageBox.style.cssText = `
+                    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                    background-color: ${bgColor}; color: white; padding: 12px 20px; border-radius: 9999px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 1000;
+                    text-align: center;
+                `;
+                document.body.appendChild(messageBox);
+                setTimeout(() => { messageBox.remove(); }, 3000);
+            }
+
+            function showErrorMessage(message) {
+                showMessage(message, 'error');
+            }
+
+            // --- Autenticación y Carga de Datos ---
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    userIdDisplay.textContent = `ID de Usuario: ${userId}`;
+                    console.log("Usuario autenticado. ID:", userId);
+
+                    // Escuchamos los cambios en el inventario en tiempo real
+                    onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/inventory`), (snapshot) => {
+                        inventoryList.innerHTML = '';
+                        const inventoryData = [];
+                        snapshot.forEach((doc) => {
+                            const data = doc.data();
+                            const newItem = createInventoryItem(doc.id, data.name, data.sku, data.quantity, data.description, data.cost, data.price);
+                            inventoryList.appendChild(newItem);
+                            // Almacenamos los datos temporalmente para el selector de ventas
+                            inventoryData.push({ ...data, docId: doc.id });
+                        });
+                        // Si no hay inventario, mostramos un mensaje
+                        if (snapshot.empty) {
+                             inventoryList.innerHTML = '<p class="text-center text-gray-500">No hay artículos en el inventario.</p>';
+                        }
+                        inventoryLoading.style.display = 'none';
+                        populateSalesItems(inventoryData);
+                    }, (error) => {
+                        console.error("Error al escuchar el inventario:", error);
+                        showErrorMessage('Error al cargar el inventario.');
+                    });
+                    
+                    // Escuchamos los cambios en el historial de ventas en tiempo real
+                    onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/sales`), (snapshot) => {
+                        salesList.innerHTML = '';
+                        snapshot.forEach((doc) => {
+                            const data = doc.data();
+                            const newSaleItem = createSalesItem(doc.id, data);
+                            salesList.prepend(newSaleItem);
+                        });
+                         // Si no hay ventas, mostramos un mensaje
+                        if (snapshot.empty) {
+                             salesList.innerHTML = '<p class="text-center text-gray-500">No hay historial de ventas.</p>';
+                        }
+                        salesLoading.style.display = 'none';
+                    }, (error) => {
+                        console.error("Error al escuchar el historial de ventas:", error);
+                        showErrorMessage('Error al cargar el historial de ventas.');
+                    });
+
+                } else {
+                    // Si no hay un usuario autenticado, iniciamos sesión anónimamente
+                    console.log("Usuario no autenticado, iniciando sesión...");
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Error en la autenticación:", error);
+                        showErrorMessage('Error al autenticar. Intenta recargar la página.');
+                    }
+                }
+            });
+
+
+            // --- Manejo de eventos ---
+
+            // Escucha los clics en los botones de las pestañas
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabId = btn.dataset.tab;
+                    switchTab(tabId);
+                });
+            });
+
+            // Escucha el evento 'submit' del formulario de inventario
+            inventoryForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (!userId) {
+                    showErrorMessage('Por favor, espera a que la autenticación se complete.');
+                    return;
+                }
+
+                const productName = document.getElementById('productName').value.trim();
+                const sku = document.getElementById('sku').value.trim();
+                const description = document.getElementById('description').value.trim();
+                const cost = parseFloat(document.getElementById('cost').value);
+                const price = parseFloat(document.getElementById('price').value);
+                const quantity = parseInt(document.getElementById('quantity').value, 10);
+
+                if (productName !== '' && sku !== '' && !isNaN(quantity) && quantity >= 0 && !isNaN(cost) && cost >= 0 && !isNaN(price) && price >= 0) {
+                    try {
+                        await addDoc(collection(db, `artifacts/${appId}/users/${userId}/inventory`), {
+                            name: productName,
+                            sku: sku,
+                            description: description,
+                            cost: cost,
+                            price: price,
+                            quantity: quantity
+                        });
+                        inventoryForm.reset();
+                        document.getElementById('quantity').value = "1";
+                        document.getElementById('cost').value = "0";
+                        document.getElementById('price').value = "0";
+                        showMessage('¡Mueble añadido con éxito!');
+                    } catch (e) {
+                        console.error("Error adding document: ", e);
+                        showErrorMessage('Error al añadir el mueble.');
+                    }
+                }
+            });
+
+            // Escucha los clics en el listado para delegar eventos de botones
+            inventoryList.addEventListener('click', function(e) {
+                const target = e.target;
+                const item = target.closest('.inventory-item');
+                if (!item) return;
+
+                const docId = item.dataset.id;
+
+                if (target.classList.contains('delete-button')) {
+                    deleteInventoryItem(docId);
+                    showMessage('¡Mueble eliminado!');
+                } else if (target.classList.contains('minus-btn')) {
+                    const quantitySpan = item.querySelector('.item-quantity');
+                    let quantity = parseInt(quantitySpan.textContent, 10);
+                    if (quantity > 0) {
+                        quantity--;
+                        quantitySpan.textContent = quantity;
+                        updateInventoryItem(docId, { quantity: quantity });
+                    }
+                } else if (target.classList.contains('plus-btn')) {
+                    const quantitySpan = item.querySelector('.item-quantity');
+                    let quantity = parseInt(quantitySpan.textContent, 10);
+                    quantity++;
+                    quantitySpan.textContent = quantity;
+                    updateInventoryItem(docId, { quantity: quantity });
+                } else if (target.classList.contains('details-toggle-btn')) {
+                    const details = item.querySelector('.item-details');
+                    details.classList.toggle('show');
+                    target.textContent = details.classList.contains('show') ? 'Ocultar detalles' : 'Mostrar detalles';
+                }
+            });
+
+            // Escucha el evento 'input' del campo de búsqueda para filtrar la lista
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.toLowerCase();
+                const items = inventoryList.querySelectorAll('.inventory-item');
+
+                items.forEach(item => {
+                    const name = item.dataset.name.toLowerCase();
+                    const sku = item.dataset.sku.toLowerCase();
+                    if (name.includes(query) || sku.includes(query)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+
+            // Escucha el clic en el botón de exportar inventario
+            exportCsvBtn.addEventListener('click', exportInventoryToCsv);
+            
+            // Escucha el clic en el botón de exportar historial de ventas
+            exportSalesCsvBtn.addEventListener('click', exportSalesToCsv);
+
+            // Escucha el cambio en el input de archivo para importar
+            importCsvInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    importFromCsv(file);
+                }
+            });
+
+            // Maneja el clic en el botón para añadir otro artículo a la venta
+            addSalesItemBtn.addEventListener('click', () => {
+                const newSalesItemDiv = document.createElement('div');
+                newSalesItemDiv.className = 'form-group flex-row items-center gap-2 mt-2';
+                newSalesItemDiv.innerHTML = `
+                    <label for="itemSelect-${salesItemCount}" class="sr-only">Producto</label>
+                    <select id="itemSelect-${salesItemCount}" class="form-select w-full" required>
+                        <option value="" disabled selected>Selecciona un producto</option>
+                    </select>
+                    <label for="itemQuantity-${salesItemCount}" class="sr-only">Cantidad</label>
+                    <input type="number" id="itemQuantity-${salesItemCount}" class="form-input w-20" value="1" min="1" required>
+                    <button type="button" class="delete-sales-item-btn text-gray-500 hover:text-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                `;
+                salesItemsContainer.appendChild(newSalesItemDiv);
+                populateSalesItems();
+                salesItemCount++;
+            });
+
+            // Maneja la eliminación de un artículo del formulario de ventas
+            salesItemsContainer.addEventListener('click', function(e) {
+                if (e.target.closest('.delete-sales-item-btn')) {
+                    const itemDiv = e.target.closest('.form-group');
+                    if (itemDiv) {
+                        itemDiv.remove();
+                    }
+                }
+            });
+
+            // Escucha el evento 'submit' del formulario de ventas
+            salesForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (!userId) {
+                    showErrorMessage('Por favor, espera a que la autenticación se complete.');
+                    return;
+                }
+
+                const soldProducts = [];
+                const salesItemInputs = salesItemsContainer.querySelectorAll('.form-group');
+                const observations = document.getElementById('salesObservations').value.trim();
+                const inventoryData = [];
+
+                // Re-obtenemos los datos del inventario de la UI para la validación
+                inventoryList.querySelectorAll('.inventory-item').forEach(item => {
+                    inventoryData.push({
+                        docId: item.dataset.id,
+                        name: item.dataset.name,
+                        sku: item.dataset.sku,
+                        quantity: parseInt(item.querySelector('.item-quantity').textContent, 10),
+                        cost: parseFloat(item.dataset.cost),
+                        price: parseFloat(item.dataset.price),
+                    });
+                });
+
+                let isValidSale = true;
+                for (const itemInput of salesItemInputs) {
+                    const select = itemInput.querySelector('select');
+                    const quantityInput = itemInput.querySelector('input[type="number"]');
+
+                    if (!select || !quantityInput || !select.value || quantityInput.value <= 0) {
+                        isValidSale = false;
+                        continue;
+                    }
+
+                    const docId = select.value;
+                    const quantityToSell = parseInt(quantityInput.value, 10);
+                    const inventoryItem = inventoryData.find(item => item.docId === docId);
+
+                    if (inventoryItem) {
+                        const currentQuantity = inventoryItem.quantity;
+                        
+                        if (quantityToSell > currentQuantity) {
+                             showErrorMessage(`No hay suficiente stock de ${inventoryItem.name}. Stock actual: ${currentQuantity}`);
+                             isValidSale = false;
+                             break;
+                        }
+
+                        // Registramos el producto vendido
+                        soldProducts.push({
+                            name: inventoryItem.name,
+                            sku: inventoryItem.sku,
+                            quantity: quantityToSell,
+                            cost: inventoryItem.cost,
+                            price: inventoryItem.price,
+                        });
+                        
+                        // Actualizamos el inventario en Firestore
+                        await updateInventoryItem(docId, { quantity: currentQuantity - quantityToSell });
+
+                    } else {
+                        isValidSale = false;
+                        break;
+                    }
+                }
+
+                if (isValidSale && soldProducts.length > 0) {
+                    try {
+                        // Creamos el objeto de la nueva venta
+                        const newSale = {
+                            date: new Date().toISOString(),
+                            products: soldProducts,
+                            observations: observations
+                        };
+                        
+                        await addDoc(collection(db, `artifacts/${appId}/users/${userId}/sales`), newSale);
+                        
+                        // Limpiamos el formulario y actualizamos los selects
+                        salesForm.reset();
+                        salesItemsContainer.innerHTML = `
+                            <div class="form-group flex-row items-center gap-2">
+                                <label for="itemSelect-0" class="sr-only">Producto</label>
+                                <select id="itemSelect-0" class="form-select w-full" required>
+                                    <option value="" disabled selected>Selecciona un producto</option>
+                                </select>
+                                <label for="itemQuantity-0" class="sr-only">Cantidad</label>
+                                <input type="number" id="itemQuantity-0" class="form-input w-20" value="1" min="1" required>
+                            </div>
+                        `;
+                        salesItemCount = 1;
+                        populateSalesItems(inventoryData);
+                        showMessage('¡Venta registrada con éxito!');
+                    } catch (e) {
+                        console.error("Error registering sale: ", e);
+                        showErrorMessage('Error al registrar la venta.');
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>
