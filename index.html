@@ -402,6 +402,69 @@
             font-weight: 700;
             cursor: pointer;
         }
+
+        /* Estilos para la sección de reportes */
+        .report-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .report-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .report-button {
+            flex-grow: 1;
+            padding: 12px 20px;
+            background-color: #60a5fa;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .report-button:hover {
+            background-color: #3b82f6;
+        }
+        
+        .report-content {
+            display: none; /* Oculto por defecto */
+            background-color: #f9fafb;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .report-content.show {
+            display: block;
+        }
+        
+        .report-list {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .report-list li {
+            padding: 4px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .report-list li:last-child {
+            border-bottom: none;
+        }
+
     </style>
 </head>
 <body>
@@ -554,6 +617,18 @@
                 <label for="importSalesCsvInput" class="csv-import-button sales text-center">Importar Historial de Ventas CSV</label>
                 <input type="file" id="importSalesCsvInput" accept=".csv" class="hidden">
             </div>
+            
+            <!-- Sección de reportes -->
+            <h2 class="text-xl font-bold mt-8 mb-4">Reportes de Ventas</h2>
+            <div class="report-section">
+                <div class="report-buttons">
+                    <button type="button" id="weeklyReportBtn" class="report-button">Reporte Semanal</button>
+                    <button type="button" id="monthlyReportBtn" class="report-button">Reporte Mensual</button>
+                </div>
+                <div id="reportContent" class="report-content">
+                    <!-- El reporte se mostrará aquí -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -580,6 +655,9 @@
             const importSalesCsvInput = document.getElementById('importSalesCsvInput');
             const inventoryLoading = document.getElementById('inventoryLoading');
             const salesLoading = document.getElementById('salesLoading');
+            const weeklyReportBtn = document.getElementById('weeklyReportBtn');
+            const monthlyReportBtn = document.getElementById('monthlyReportBtn');
+            const reportContent = document.getElementById('reportContent');
             
             // Un contador para los campos de venta dinámicos
             let salesItemCount = 1;
@@ -1009,6 +1087,85 @@
                 reader.readAsText(file);
             }
 
+            // --- Funciones de Reportes ---
+            
+            // Función principal para generar el reporte
+            function generateReport(period) {
+                const now = new Date();
+                let startDate;
+                let title;
+
+                if (period === 'weekly') {
+                    // Calcula el inicio de la semana actual (Lunes)
+                    const dayOfWeek = now.getDay();
+                    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Ajusta para que el Lunes sea el día 1
+                    startDate = new Date(now.setDate(diff));
+                    startDate.setHours(0, 0, 0, 0);
+                    title = `Reporte Semanal (del ${startDate.toLocaleDateString()})`;
+                } else if (period === 'monthly') {
+                    // Calcula el inicio del mes actual
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    title = `Reporte Mensual (${now.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })})`;
+                }
+
+                // Filtra las ventas dentro del período
+                const filteredSales = salesData.filter(sale => {
+                    const saleDate = new Date(sale.date);
+                    return saleDate >= startDate;
+                });
+                
+                if (filteredSales.length === 0) {
+                     reportContent.classList.remove('show');
+                     showMessage('No hay ventas registradas en este período.', 'info');
+                     return;
+                }
+
+                // Calcula totales y productos más vendidos
+                let totalSales = 0;
+                let totalProfit = 0;
+                const productSales = {}; // Objeto para contar las ventas de cada producto
+
+                filteredSales.forEach(sale => {
+                    totalSales += sale.totalPrice;
+                    totalProfit += (sale.totalPrice - sale.totalCost);
+
+                    sale.products.forEach(product => {
+                        const key = `${product.name} - ${product.sku}`;
+                        if (!productSales[key]) {
+                            productSales[key] = 0;
+                        }
+                        productSales[key] += product.quantity;
+                    });
+                });
+
+                // Convierte el objeto de ventas en un array y lo ordena
+                const sortedProducts = Object.entries(productSales)
+                    .map(([name, quantity]) => ({ name, quantity }))
+                    .sort((a, b) => b.quantity - a.quantity);
+                    
+                renderReport({
+                    title: title,
+                    totalSales: totalSales,
+                    totalProfit: totalProfit,
+                    mostSoldProducts: sortedProducts
+                });
+            }
+
+            // Función para renderizar el reporte en el DOM
+            function renderReport(reportData) {
+                reportContent.innerHTML = `
+                    <h3 class="text-lg font-bold mb-2">${reportData.title}</h3>
+                    <p><strong>Ventas totales:</strong> $${reportData.totalSales.toFixed(2)}</p>
+                    <p><strong>Ganancia total:</strong> $${reportData.totalProfit.toFixed(2)}</p>
+                    <h4 class="font-semibold mt-4 mb-2">Productos más vendidos:</h4>
+                    <ol class="report-list">
+                        ${reportData.mostSoldProducts.map(p => `<li>${p.name} - **${p.quantity} unidades**</li>`).join('')}
+                    </ol>
+                `;
+                reportContent.classList.add('show');
+            }
+
 
             // --- Manejo de eventos ---
             
@@ -1287,6 +1444,10 @@
             
             // Escucha el clic en el botón de exportar historial de ventas
             exportSalesCsvBtn.addEventListener('click', exportSalesToCsv);
+            
+            // Escucha los clics en los botones de reportes
+            weeklyReportBtn.addEventListener('click', () => generateReport('weekly'));
+            monthlyReportBtn.addEventListener('click', () => generateReport('monthly'));
 
             // Escucha el cambio en el input de archivo para importar inventario
             importCsvInput.addEventListener('change', function(e) {
