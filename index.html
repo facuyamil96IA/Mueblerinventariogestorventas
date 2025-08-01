@@ -326,6 +326,64 @@
             text-align: center;
             color: #6b7280;
         }
+        
+        .edit-button {
+            background-color: #f59e0b;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            padding: 6px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .edit-button:hover {
+            background-color: #d97706;
+        }
+
+        /* Oculta los elementos al editar */
+        .inventory-item[data-editing="true"] .item-content {
+            display: none;
+        }
+        
+        /* Muestra el formulario al editar */
+        .inventory-item[data-editing="true"] .edit-form {
+            display: flex;
+        }
+        
+        .edit-form {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .edit-form-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        
+        .save-button {
+            padding: 8px 16px;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        
+        .cancel-button {
+            padding: 8px 16px;
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-weight: 700;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -571,31 +629,62 @@
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'inventory-item';
                 itemDiv.dataset.id = item.id;
-                itemDiv.dataset.sku = item.sku;
-                itemDiv.dataset.name = item.name;
-                itemDiv.dataset.description = item.description;
-                itemDiv.dataset.cost = item.cost;
-                itemDiv.dataset.price = item.price;
+                // Estado para saber si el artículo está siendo editado
+                itemDiv.dataset.editing = 'false';
 
                 itemDiv.innerHTML = `
-                    <div class="item-header">
-                        <span class="item-name">${item.name}</span>
-                        <span class="item-sku">SKU: ${item.sku}</span>
-                    </div>
-                    <div class="item-actions">
-                        <div class="quantity-control">
-                            <button type="button" class="quantity-btn minus-btn">-</button>
-                            <span class="item-quantity">${item.quantity}</span>
-                            <button type="button" class="quantity-btn plus-btn">+</button>
+                    <!-- Contenido de visualización normal -->
+                    <div class="item-content">
+                        <div class="item-header">
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-sku">SKU: ${item.sku}</span>
                         </div>
-                        <button type="button" class="delete-button">Eliminar</button>
+                        <div class="item-actions">
+                            <div class="quantity-control">
+                                <button type="button" class="quantity-btn minus-btn">-</button>
+                                <span class="item-quantity">${item.quantity}</span>
+                                <button type="button" class="quantity-btn plus-btn">+</button>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" class="edit-button">Editar</button>
+                                <button type="button" class="delete-button">Eliminar</button>
+                            </div>
+                        </div>
+                        <button type="button" class="details-toggle-btn">Mostrar detalles</button>
+                        <div class="item-details">
+                            <p><strong>Descripción:</strong> ${item.description}</p>
+                            <p><strong>Costo:</strong> $${parseFloat(item.cost).toFixed(2)}</p>
+                            <p><strong>Precio:</strong> $${parseFloat(item.price).toFixed(2)}</p>
+                        </div>
                     </div>
-                    <button type="button" class="details-toggle-btn">Mostrar detalles</button>
-                    <div class="item-details">
-                        <p><strong>Descripción:</strong> ${item.description}</p>
-                        <p><strong>Costo:</strong> $${parseFloat(item.cost).toFixed(2)}</p>
-                        <p><strong>Precio:</strong> $${parseFloat(item.price).toFixed(2)}</p>
-                    </div>
+                    
+                    <!-- Formulario de edición (inicialmente oculto) -->
+                    <form class="edit-form">
+                        <div class="form-group">
+                            <label for="edit-name-${item.id}">Nombre del producto</label>
+                            <input type="text" id="edit-name-${item.id}" class="form-input" value="${item.name}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-sku-${item.id}">SKU</label>
+                            <input type="text" id="edit-sku-${item.id}" class="form-input" value="${item.sku}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-description-${item.id}">Descripción</label>
+                            <textarea id="edit-description-${item.id}" class="form-textarea" rows="3">${item.description}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-cost-${item.id}">Costo</label>
+                            <input type="number" id="edit-cost-${item.id}" class="form-input" value="${item.cost}" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-price-${item.id}">Precio</label>
+                            <input type="number" id="edit-price-${item.id}" class="form-input" value="${item.price}" min="0" required>
+                        </div>
+                        <div class="edit-form-actions">
+                            <button type="button" class="cancel-button">Cancelar</button>
+                            <button type="submit" class="save-button">Guardar</button>
+                        </div>
+                    </form>
                 `;
                 return itemDiv;
             }
@@ -688,8 +777,8 @@
                 }
                 let csvContent = "Nombre,SKU,Descripción,Costo,Precio,Cantidad\n"; // Encabezado del CSV
                 inventoryData.forEach(item => {
-                    const sanitizedDescription = item.description.replace(/"/g, '""');
-                    csvContent += `${item.name},${item.sku},"${sanitizedDescription}",${item.cost},${item.price},${item.quantity}\n`;
+                    const sanitizedDescription = item.description ? item.description.replace(/"/g, '""') : '';
+                    csvContent += `"${item.name}","${item.sku}","${sanitizedDescription}",${item.cost},${item.price},${item.quantity}\n`;
                 });
 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -748,7 +837,7 @@
                         const row = rows[i].trim();
                         if (row) {
                              const parts = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
-                            if (parts && parts.length === 6) {
+                            if (parts && parts.length >= 6) { // Aseguramos que haya al menos 6 columnas
                                 const [name, sku, description, cost, price, quantity] = parts.map(part => part.trim().replace(/^"|"$/g, ''));
                                 
                                 newInventoryItems.push({
@@ -786,7 +875,7 @@
                         const row = rows[i].trim();
                         if (row) {
                             const parts = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
-                            if (parts && parts.length === 6) {
+                            if (parts && parts.length >= 6) { // Aseguramos que haya al menos 6 columnas
                                 const [date, totalProfit, totalCost, totalPrice, observations, productsString] = parts.map(part => part.trim().replace(/^"|"$/g, ''));
                                 
                                 const products = [];
@@ -907,6 +996,36 @@
                     const details = itemElement.querySelector('.item-details');
                     details.classList.toggle('show');
                     target.textContent = details.classList.contains('show') ? 'Ocultar detalles' : 'Mostrar detalles';
+                } else if (target.classList.contains('edit-button')) {
+                    // Cambia el estado a edición y muestra el formulario
+                    itemElement.dataset.editing = 'true';
+                } else if (target.classList.contains('cancel-button')) {
+                    // Cancela la edición y vuelve a la vista normal
+                    itemElement.dataset.editing = 'false';
+                } else if (target.classList.contains('save-button')) {
+                    e.preventDefault(); // Evita que el formulario se envíe
+
+                    const newName = document.getElementById(`edit-name-${docId}`).value.trim();
+                    const newSku = document.getElementById(`edit-sku-${docId}`).value.trim();
+                    const newDescription = document.getElementById(`edit-description-${docId}`).value.trim();
+                    const newCost = parseFloat(document.getElementById(`edit-cost-${docId}`).value);
+                    const newPrice = parseFloat(document.getElementById(`edit-price-${docId}`).value);
+                    
+                    if (newName !== '' && newSku !== '' && !isNaN(newCost) && newCost >= 0 && !isNaN(newPrice) && newPrice >= 0) {
+                        // Actualiza los datos del inventario en el array
+                        inventoryData[itemIndex].name = newName;
+                        inventoryData[itemIndex].sku = newSku;
+                        inventoryData[itemIndex].description = newDescription;
+                        inventoryData[itemIndex].cost = newCost;
+                        inventoryData[itemIndex].price = newPrice;
+
+                        saveDataToLocalStorage();
+                        renderInventory();
+                        populateSalesItems();
+                        showMessage('¡Artículo actualizado con éxito!');
+                    } else {
+                        showErrorMessage('Por favor, completa todos los campos requeridos y asegúrate de que los valores sean válidos.');
+                    }
                 }
             });
 
