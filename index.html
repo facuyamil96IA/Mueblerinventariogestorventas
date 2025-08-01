@@ -474,12 +474,20 @@
         
         // Espera a que el DOM esté completamente cargado para ejecutar el script
         window.onload = function() {
-            // --- Configuración de Firebase ---
-            // Usamos las variables globales proporcionadas por el entorno de Canvas para la configuración.
-            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
+            // --- Configuración de Firebase (ajustada para Netlify) ---
+            // Usa la configuración proporcionada por el usuario.
+            const firebaseConfig = {
+                apiKey: "AIzaSyDkYh5EhJU5YCvOgeIVCoo1wZpWaaKnb5c",
+                authDomain: "muebleriagestor.firebaseapp.com",
+                projectId: "muebleriagestor",
+                storageBucket: "muebleriagestor.firebasestorage.app",
+                messagingSenderId: "765085925949",
+                appId: "1:765085925949:web:1ab0ff2d140a6a2efda054"
+            };
+            
+            // Para una implementación estática, podemos usar el mismo ID de aplicación
+            const appId = firebaseConfig.projectId;
+            
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
             const auth = getAuth(app);
@@ -772,74 +780,69 @@
             function showErrorMessage(message) {
                 showMessage(message, 'error');
             }
-
-            // --- Autenticación y Carga de Datos ---
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    userIdDisplay.textContent = `ID de Usuario: ${userId}`;
-                    console.log("Usuario autenticado. ID:", userId);
-
-                    // Escuchamos los cambios en el inventario en tiempo real
-                    onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/inventory`), (snapshot) => {
-                        inventoryLoading.style.display = 'none'; // Ocultamos el mensaje de carga
-                        inventoryList.innerHTML = ''; // Limpiamos la lista
-
-                        const inventoryData = [];
-                        snapshot.forEach((doc) => {
-                            const data = doc.data();
-                            const newItem = createInventoryItem(doc.id, data.name, data.sku, data.quantity, data.description, data.cost, data.price);
-                            inventoryList.appendChild(newItem);
-                            // Almacenamos los datos temporalmente para el selector de ventas
-                            inventoryData.push({ ...data, docId: doc.id });
-                        });
-
-                        // Si no hay inventario, mostramos un mensaje
-                        if (snapshot.empty) {
-                             inventoryList.innerHTML = '<p class="text-center text-gray-500">No hay artículos en el inventario.</p>';
-                        }
-                        
-                        populateSalesItems(inventoryData);
-                    }, (error) => {
-                        console.error("Error al escuchar el inventario:", error);
-                        showErrorMessage('Error al cargar el inventario.');
-                    });
-                    
-                    // Escuchamos los cambios en el historial de ventas en tiempo real
-                    onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/sales`), (snapshot) => {
-                        salesLoading.style.display = 'none'; // Ocultamos el mensaje de carga
-                        salesList.innerHTML = ''; // Limpiamos la lista
-                        
-                        snapshot.forEach((doc) => {
-                            const data = doc.data();
-                            const newSaleItem = createSalesItem(doc.id, data);
-                            salesList.prepend(newSaleItem);
-                        });
-
-                         // Si no hay ventas, mostramos un mensaje
-                        if (snapshot.empty) {
-                             salesList.innerHTML = '<p class="text-center text-gray-500">No hay historial de ventas.</p>';
-                        }
-                    }, (error) => {
-                        console.error("Error al escuchar el historial de ventas:", error);
-                        showErrorMessage('Error al cargar el historial de ventas.');
-                    });
-
-                } else {
-                    // Si no hay un usuario autenticado, iniciamos sesión.
-                    // Usamos el token personalizado si está disponible.
-                    console.log("Usuario no autenticado, iniciando sesión...");
-                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Error en la autenticación:", error);
-                        showErrorMessage('Error al autenticar. Intenta recargar la página.');
-                    }
-                }
+            
+            // --- Autenticación y Carga de Datos (ajustado para Netlify) ---
+            // Primero intentamos iniciar sesión de forma anónima
+            signInAnonymously(auth).then(() => {
+                 onAuthStateChanged(auth, async (user) => {
+                     if (user) {
+                         userId = user.uid;
+                         userIdDisplay.textContent = `ID de Usuario: ${userId}`;
+                         console.log("Usuario autenticado. ID:", userId);
+     
+                         // Escuchamos los cambios en el inventario en tiempo real
+                         onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/inventory`), (snapshot) => {
+                             inventoryLoading.style.display = 'none'; // Ocultamos el mensaje de carga
+                             inventoryList.innerHTML = ''; // Limpiamos la lista
+     
+                             const inventoryData = [];
+                             snapshot.forEach((doc) => {
+                                 const data = doc.data();
+                                 const newItem = createInventoryItem(doc.id, data.name, data.sku, data.quantity, data.description, data.cost, data.price);
+                                 inventoryList.appendChild(newItem);
+                                 // Almacenamos los datos temporalmente para el selector de ventas
+                                 inventoryData.push({ ...data, docId: doc.id });
+                             });
+     
+                             // Si no hay inventario, mostramos un mensaje
+                             if (snapshot.empty) {
+                                  inventoryList.innerHTML = '<p class="text-center text-gray-500">No hay artículos en el inventario.</p>';
+                             }
+                             
+                             populateSalesItems(inventoryData);
+                         }, (error) => {
+                             console.error("Error al escuchar el inventario:", error);
+                             showErrorMessage('Error al cargar el inventario.');
+                         });
+                         
+                         // Escuchamos los cambios en el historial de ventas en tiempo real
+                         onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/sales`), (snapshot) => {
+                             salesLoading.style.display = 'none'; // Ocultamos el mensaje de carga
+                             salesList.innerHTML = ''; // Limpiamos la lista
+                             
+                             snapshot.forEach((doc) => {
+                                 const data = doc.data();
+                                 const newSaleItem = createSalesItem(doc.id, data);
+                                 salesList.prepend(newSaleItem);
+                             });
+     
+                              // Si no hay ventas, mostramos un mensaje
+                             if (snapshot.empty) {
+                                  salesList.innerHTML = '<p class="text-center text-gray-500">No hay historial de ventas.</p>';
+                             }
+                         }, (error) => {
+                             console.error("Error al escuchar el historial de ventas:", error);
+                             showErrorMessage('Error al cargar el historial de ventas.');
+                         });
+     
+                     } else {
+                         // Esto no debería ocurrir, pero lo dejamos como fallback
+                         console.log("Usuario no autenticado, intentando iniciar sesión de nuevo.");
+                     }
+                 });
+            }).catch((error) => {
+                console.error("Error en la autenticación anónima:", error);
+                showErrorMessage('Error al autenticar. Intenta recargar la página.');
             });
 
 
