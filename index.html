@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario y Ventas MLF Muebles la familia</title>
+    <title>Inventario y Ventas MLF Muebles la familia (Local)</title>
     <!-- Importar la fuente Inter de Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <!-- Importar Tailwind CSS para estilos -->
@@ -234,6 +234,98 @@
         .delete-button:hover {
             background-color: #fee2e2;
         }
+
+        .csv-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .csv-button {
+            flex-grow: 1;
+            padding: 12px 20px;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .csv-button:hover {
+            background-color: #059669;
+        }
+
+        .csv-button:active {
+            transform: scale(0.98);
+        }
+        
+        /* Estilos para los botones de importación */
+        .csv-import-button {
+            flex-grow: 1;
+            padding: 12px 20px;
+            background-color: #3b82f6; /* Usar un color diferente para distinguirlo */
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .csv-import-button:hover {
+            background-color: #2563eb;
+        }
+        
+        .csv-import-button.sales {
+            background-color: #60a5fa; /* Color para el botón de ventas */
+        }
+        
+        .csv-import-button.sales:hover {
+            background-color: #3b82f6;
+        }
+
+        /* Estilos para la sección de detalles adicionales */
+        .item-details {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        .item-details.show {
+            display: flex;
+        }
+
+        .details-toggle-btn {
+            background-color: transparent;
+            border: none;
+            color: #4b5563;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            align-self: flex-start;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            transition: background-color 0.2s ease;
+        }
+
+        .details-toggle-btn:hover {
+            background-color: #e5e7eb;
+        }
+        
+        .loading-text {
+            display: none;
+            text-align: center;
+            color: #6b7280;
+        }
         
         .edit-button {
             background-color: #f59e0b;
@@ -311,35 +403,16 @@
             cursor: pointer;
         }
 
-        /* Estilos para la sección de reportes y dashboard */
-        .dashboard-grid, .report-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        /* Estilos para la sección de reportes */
+        .report-section {
+            display: flex;
+            flex-direction: column;
             gap: 16px;
             margin-top: 16px;
             padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
         }
 
-        .metric-card {
-            background-color: #f9fafb;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-        
-        .metric-card .title {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #6b7280;
-            margin-bottom: 4px;
-        }
-        
-        .metric-card .value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1f2937;
-        }
-        
         .report-buttons {
             display: flex;
             gap: 8px;
@@ -391,30 +464,7 @@
         .report-list li:last-child {
             border-bottom: none;
         }
-        
-        /* Estilos para los botones de import/export */
-        .io-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 24px;
-        }
-        
-        .io-button {
-            flex-grow: 1;
-            padding: 12px 20px;
-            background-color: #4b5563;
-            color: white;
-            border: none;
-            border-radius: 9999px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        
-        .io-button:hover {
-            background-color: #1f2937;
-        }
+
     </style>
 </head>
 <body>
@@ -423,16 +473,8 @@
 
         <!-- Navegación de pestañas -->
         <div class="tab-nav">
-            <button class="tab-btn" data-tab="dashboardTab">Dashboard</button>
             <button class="tab-btn active" data-tab="inventoryTab">Inventario</button>
             <button class="tab-btn" data-tab="salesTab">Gestor de Ventas</button>
-        </div>
-
-        <!-- Contenido de la pestaña de Dashboard -->
-        <div id="dashboardTab" class="tab-content hidden">
-            <div id="dashboardGrid" class="dashboard-grid">
-                <!-- Las métricas se inyectarán aquí -->
-            </div>
         </div>
 
         <!-- Contenido de la pestaña de Inventario -->
@@ -447,6 +489,7 @@
                     placeholder="Buscar por nombre o SKU..." 
                 />
             </div>
+
             <!-- Formulario para agregar nuevos artículos -->
             <form id="inventoryForm" class="inventory-form">
                 <div class="form-group">
@@ -514,18 +557,20 @@
                 <button type="submit" class="add-button">Añadir Mueble</button>
             </form>
             
+            <!-- Mensaje de carga para el inventario -->
+            <p id="inventoryLoading" class="loading-text">Cargando inventario...</p>
+            
             <!-- Lista donde se mostrarán los artículos -->
             <div id="inventoryList" class="inventory-list">
                 <!-- Los artículos se inyectarán aquí dinámicamente -->
             </div>
 
-             <!-- Botones para Importar y Exportar CSV -->
-            <div class="io-buttons">
-                <button id="exportInventoryBtn" class="io-button">Exportar Inventario (CSV)</button>
-                <input type="file" id="importInventoryFile" class="hidden" accept=".csv" />
-                <button id="importInventoryBtn" class="io-button">Importar Inventario (CSV)</button>
+            <!-- Botones para importar/exportar CSV -->
+            <div class="csv-actions">
+                <button type="button" id="exportCsvBtn" class="csv-button">Exportar Inventario CSV</button>
+                <label for="importCsvInput" class="csv-import-button text-center">Importar Inventario CSV</label>
+                <input type="file" id="importCsvInput" accept=".csv" class="hidden">
             </div>
-
         </div>
 
         <!-- Contenido de la pestaña de Gestor de Ventas -->
@@ -560,8 +605,17 @@
             </form>
             
             <h2 class="text-xl font-bold mt-8 mb-4">Historial de Ventas</h2>
+            <!-- Mensaje de carga para el historial de ventas -->
+            <p id="salesLoading" class="loading-text">Cargando historial de ventas...</p>
+            
             <div id="salesList" class="sales-list">
                  <!-- Las ventas se inyectarán aquí dinámicamente -->
+            </div>
+            
+            <div class="csv-actions">
+                <button type="button" id="exportSalesCsvBtn" class="csv-button bg-blue-500 hover:bg-blue-600">Exportar Historial de Ventas CSV</button>
+                <label for="importSalesCsvInput" class="csv-import-button sales text-center">Importar Historial de Ventas CSV</label>
+                <input type="file" id="importSalesCsvInput" accept=".csv" class="hidden">
             </div>
             
             <!-- Sección de reportes -->
@@ -571,33 +625,996 @@
                     <button type="button" id="weeklyReportBtn" class="report-button">Reporte Semanal</button>
                     <button type="button" id="monthlyReportBtn" class="report-button">Reporte Mensual</button>
                 </div>
+                <!-- Sección para el reporte de rango de fechas -->
+                <div class="flex flex-col gap-4 p-4 bg-gray-100 rounded-xl">
+                    <h3 class="text-base font-bold">Reporte por Rango de Fechas</h3>
+                    <div class="flex flex-col gap-2">
+                        <div class="form-group">
+                            <label for="startDateInput">Fecha de inicio</label>
+                            <input type="date" id="startDateInput" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="endDateInput">Fecha de fin</label>
+                            <input type="date" id="endDateInput" class="form-input">
+                        </div>
+                    </div>
+                    <button type="button" id="customReportBtn" class="add-button">Generar Reporte Personalizado</button>
+                </div>
+
                 <div id="reportContent" class="report-content">
                     <!-- El reporte se mostrará aquí -->
                 </div>
-            </div>
-
-            <!-- Botones para Importar y Exportar CSV -->
-            <div class="io-buttons">
-                <button id="exportSalesBtn" class="io-button">Exportar Ventas (CSV)</button>
-                <input type="file" id="importSalesFile" class="hidden" accept=".csv" />
-                <button id="importSalesBtn" class="io-button">Importar Ventas (CSV)</button>
             </div>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        // Espera a que el DOM esté completamente cargado para ejecutar el script
+        window.onload = function() {
             // --- Declaración de variables globales ---
-            let inventoryData = JSON.parse(localStorage.getItem('inventory')) || [];
-            let salesData = JSON.parse(localStorage.getItem('sales')) || [];
-
+            let inventoryData = [];
+            let salesData = [];
+            
             // --- Selecciona los elementos del DOM ---
             const tabButtons = document.querySelectorAll('.tab-btn');
             const tabContents = document.querySelectorAll('.tab-content');
             const inventoryForm = document.getElementById('inventoryForm');
             const inventoryList = document.getElementById('inventoryList');
             const searchInput = document.getElementById('searchInput');
+            const exportCsvBtn = document.getElementById('exportCsvBtn');
+            const importCsvInput = document.getElementById('importCsvInput');
             const salesForm = document.getElementById('salesForm');
             const salesList = document.getElementById('salesList');
             const addSalesItemBtn = document.getElementById('addSalesItemBtn');
-            const salesItemsContainer = document.getEl
+            const salesItemsContainer = document.getElementById('salesItemsContainer');
+            const exportSalesCsvBtn = document.getElementById('exportSalesCsvBtn');
+            const importSalesCsvInput = document.getElementById('importSalesCsvInput');
+            const inventoryLoading = document.getElementById('inventoryLoading');
+            const salesLoading = document.getElementById('salesLoading');
+            const weeklyReportBtn = document.getElementById('weeklyReportBtn');
+            const monthlyReportBtn = document.getElementById('monthlyReportBtn');
+            const startDateInput = document.getElementById('startDateInput');
+            const endDateInput = document.getElementById('endDateInput');
+            const customReportBtn = document.getElementById('customReportBtn');
+            const reportContent = document.getElementById('reportContent');
+            
+            // Un contador para los campos de venta dinámicos
+            let salesItemCount = 1;
+
+            // --- Funciones de almacenamiento local ---
+            
+            // Función para guardar los datos en localStorage
+            function saveDataToLocalStorage() {
+                localStorage.setItem('inventoryData', JSON.stringify(inventoryData));
+                localStorage.setItem('salesData', JSON.stringify(salesData));
+            }
+            
+            // Función para cargar los datos desde localStorage
+            function loadDataFromLocalStorage() {
+                const storedInventory = localStorage.getItem('inventoryData');
+                const storedSales = localStorage.getItem('salesData');
+                
+                if (storedInventory) {
+                    inventoryData = JSON.parse(storedInventory);
+                }
+                
+                if (storedSales) {
+                    salesData = JSON.parse(storedSales);
+                }
+                
+                // Renderiza los datos cargados
+                renderInventory();
+                renderSales();
+                populateSalesItems();
+            }
+
+            // --- Funciones de renderizado del DOM ---
+            
+            // Renderiza la lista de inventario completa
+            function renderInventory(filteredData = inventoryData) {
+                inventoryList.innerHTML = '';
+                if (filteredData.length === 0) {
+                    inventoryList.innerHTML = '<p class="text-center text-gray-500">No hay artículos en el inventario.</p>';
+                    return;
+                }
+                
+                filteredData.forEach(item => {
+                    const newItem = createInventoryItemElement(item);
+                    inventoryList.appendChild(newItem);
+                });
+            }
+            
+            // Renderiza la lista de ventas completa
+            function renderSales() {
+                salesList.innerHTML = '';
+                if (salesData.length === 0) {
+                    salesList.innerHTML = '<p class="text-center text-gray-500">No hay historial de ventas.</p>';
+                    return;
+                }
+                
+                // Muestra las ventas más recientes primero
+                salesData.slice().reverse().forEach(sale => {
+                    const newSaleItem = createSalesItemElement(sale);
+                    salesList.appendChild(newSaleItem);
+                });
+            }
+
+            // Crea el elemento HTML para un artículo del inventario
+            function createInventoryItemElement(item) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'inventory-item';
+                itemDiv.dataset.id = item.id;
+                // Estado para saber si el artículo está siendo editado
+                itemDiv.dataset.editing = 'false';
+
+                itemDiv.innerHTML = `
+                    <!-- Contenido de visualización normal -->
+                    <div class="item-content">
+                        <div class="item-header">
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-sku">SKU: ${item.sku}</span>
+                        </div>
+                        <div class="item-actions">
+                            <div class="quantity-control">
+                                <button type="button" class="quantity-btn minus-btn">-</button>
+                                <span class="item-quantity">${item.quantity}</span>
+                                <button type="button" class="quantity-btn plus-btn">+</button>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" class="edit-button">Editar</button>
+                                <button type="button" class="delete-button">Eliminar</button>
+                            </div>
+                        </div>
+                        <button type="button" class="details-toggle-btn">Mostrar detalles</button>
+                        <div class="item-details">
+                            <p><strong>Descripción:</strong> ${item.description}</p>
+                            <p><strong>Costo:</strong> $${parseFloat(item.cost).toFixed(2)}</p>
+                            <p><strong>Precio:</strong> $${parseFloat(item.price).toFixed(2)}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulario de edición (inicialmente oculto) -->
+                    <form class="edit-form">
+                        <div class="form-group">
+                            <label for="edit-name-${item.id}">Nombre del producto</label>
+                            <input type="text" id="edit-name-${item.id}" class="form-input" value="${item.name}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-sku-${item.id}">SKU</label>
+                            <input type="text" id="edit-sku-${item.id}" class="form-input" value="${item.sku}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-description-${item.id}">Descripción</label>
+                            <textarea id="edit-description-${item.id}" class="form-textarea" rows="3">${item.description}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-cost-${item.id}">Costo</label>
+                            <input type="number" id="edit-cost-${item.id}" class="form-input" value="${item.cost}" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-price-${item.id}">Precio</label>
+                            <input type="number" id="edit-price-${item.id}" class="form-input" value="${item.price}" min="0" required>
+                        </div>
+                        <div class="edit-form-actions">
+                            <button type="button" class="cancel-button">Cancelar</button>
+                            <button type="submit" class="save-button">Guardar</button>
+                        </div>
+                    </form>
+                `;
+                return itemDiv;
+            }
+            
+            // Crea el elemento HTML para un artículo de venta
+            function createSalesItemElement(sale) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'sales-item';
+                // Usamos la fecha como un identificador único para la venta
+                itemDiv.dataset.id = sale.date;
+                itemDiv.dataset.editing = 'false';
+
+                const totalProfit = (sale.totalPrice - sale.totalCost).toFixed(2);
+
+                itemDiv.innerHTML = `
+                    <!-- Contenido de visualización normal -->
+                    <div class="item-content">
+                        <div class="item-header">
+                            <span class="item-name">Venta</span>
+                            <span class="item-sku">${new Date(sale.date).toLocaleString()}</span>
+                        </div>
+                        <div class="item-details show">
+                            <p><strong>Productos vendidos:</strong></p>
+                            <ul>
+                                ${sale.products.map(p => `<li>- ${p.name} (SKU: ${p.sku}) x${p.quantity}</li>`).join('')}
+                            </ul>
+                            <p><strong>Ganancia total:</strong> $${totalProfit}</p>
+                            ${sale.observations ? `<p><strong>Observaciones:</strong> ${sale.observations}</p>` : ''}
+                        </div>
+                        <div class="item-actions mt-4 flex justify-end gap-2">
+                            <button type="button" class="edit-sale-button">Editar</button>
+                            <button type="button" class="delete-button text-red-500 hover:text-red-700">Eliminar</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulario de edición (inicialmente oculto) -->
+                    <form class="edit-form sales-edit-form">
+                        <h3 class="font-bold mb-2">Editar Venta del ${new Date(sale.date).toLocaleString()}</h3>
+                        <div class="edit-sales-items-container">
+                            <!-- Los campos de productos se inyectarán aquí -->
+                        </div>
+                        <button type="button" class="add-sales-item-btn bg-gray-200 text-gray-800 hover:bg-gray-300 px-4 py-2 rounded-full mt-2">
+                            Añadir otro artículo
+                        </button>
+                        <div class="form-group mt-4">
+                            <label for="edit-sales-observations-${sale.date}">Observaciones</label>
+                            <textarea id="edit-sales-observations-${sale.date}" class="form-textarea" rows="3">${sale.observations || ''}</textarea>
+                        </div>
+                        <div class="edit-form-actions mt-4">
+                            <button type="button" class="cancel-button">Cancelar</button>
+                            <button type="submit" class="save-button">Guardar</button>
+                        </div>
+                    </form>
+                `;
+                return itemDiv;
+            }
+
+            // Función auxiliar para crear los campos de selección de productos para el formulario de venta
+            function createSalesItemInputs(item, index, container, isEditForm = false) {
+                const newSalesItemDiv = document.createElement('div');
+                newSalesItemDiv.className = 'form-group flex-row items-center gap-2 mt-2';
+                newSalesItemDiv.dataset.index = index;
+
+                const selectId = `itemSelect-${isEditForm ? 'edit-' : ''}${index}`;
+                const quantityId = `itemQuantity-${isEditForm ? 'edit-' : ''}${index}`;
+                
+                let optionsHtml = '<option value="" disabled>Selecciona un producto</option>';
+                inventoryData.forEach(invItem => {
+                    // Si estamos en el formulario de edición, necesitamos incluir el producto que ya estaba seleccionado, incluso si su stock es 0
+                    const isSelected = item && (item.name === invItem.name && item.sku === invItem.sku);
+                    if (invItem.quantity > 0 || isSelected) {
+                        const selectedAttribute = isSelected ? 'selected' : '';
+                        optionsHtml += `<option value="${invItem.id}" ${selectedAttribute}>${invItem.name} (SKU: ${invItem.sku}, Cantidad: ${invItem.quantity + (isSelected ? item.quantity : 0)})</option>`;
+                    }
+                });
+
+                newSalesItemDiv.innerHTML = `
+                    <label for="${selectId}" class="sr-only">Producto</label>
+                    <select id="${selectId}" class="form-select w-full" required>
+                        ${optionsHtml}
+                    </select>
+                    <label for="${quantityId}" class="sr-only">Cantidad</label>
+                    <input type="number" id="${quantityId}" class="form-input w-20" value="${item ? item.quantity : '1'}" min="1" required>
+                    <button type="button" class="delete-sales-item-btn text-gray-500 hover:text-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                `;
+                container.appendChild(newSalesItemDiv);
+                
+                // Actualizar la cantidad si es un formulario de edición
+                if (isEditForm && item) {
+                    const selectElement = newSalesItemDiv.querySelector('select');
+                    const quantityElement = newSalesItemDiv.querySelector('input');
+                    const inventoryItem = inventoryData.find(inv => inv.name === item.name && inv.sku === item.sku);
+                    if (inventoryItem) {
+                         selectElement.value = inventoryItem.id;
+                    }
+                    quantityElement.value = item.quantity;
+                }
+            }
+
+
+            // Función para cambiar de pestaña
+            function switchTab(tabId) {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.add('hidden'));
+
+                const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
+                const activeContent = document.getElementById(tabId);
+                
+                if (activeBtn) activeBtn.classList.add('active');
+                if (activeContent) activeContent.classList.remove('hidden');
+
+                if (tabId === 'salesTab') {
+                    populateSalesItems();
+                }
+            }
+            
+            // Función para popular el select de productos en el formulario de ventas
+            function populateSalesItems() {
+                const selects = salesItemsContainer.querySelectorAll('.form-select');
+                selects.forEach(select => {
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="" disabled selected>Selecciona un producto</option>';
+                    inventoryData.forEach(item => {
+                        if (item.quantity > 0) {
+                            const option = document.createElement('option');
+                            option.value = item.id;
+                            option.textContent = `${item.name} (SKU: ${item.sku}, Cantidad: ${item.quantity})`;
+                            select.appendChild(option);
+                        }
+                    });
+                    if (currentValue) {
+                        select.value = currentValue;
+                    }
+                });
+            }
+            
+            // Función para mostrar mensajes de error/éxito
+            function showMessage(message, type = 'success') {
+                const messageBox = document.createElement('div');
+                messageBox.textContent = message;
+                let bgColor = '#10b981'; // Tailwind green-500
+                if (type === 'error') {
+                    bgColor = '#ef4444'; // Tailwind red-500
+                }
+                messageBox.style.cssText = `
+                    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                    background-color: ${bgColor}; color: white; padding: 12px 20px; border-radius: 9999px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 1000;
+                    text-align: center;
+                `;
+                document.body.appendChild(messageBox);
+                setTimeout(() => { messageBox.remove(); }, 3000);
+            }
+
+            function showErrorMessage(message) {
+                showMessage(message, 'error');
+            }
+            
+            // Función para exportar los datos del inventario a un archivo CSV
+            function exportInventoryToCsv() {
+                if (inventoryData.length === 0) {
+                    showErrorMessage('No hay datos en el inventario para exportar.');
+                    return;
+                }
+                let csvContent = "Nombre,SKU,Descripción,Costo,Precio,Cantidad\n"; // Encabezado del CSV
+                inventoryData.forEach(item => {
+                    const sanitizedDescription = item.description ? item.description.replace(/"/g, '""') : '';
+                    csvContent += `"${item.name}","${item.sku}","${sanitizedDescription}",${item.cost},${item.price},${item.quantity}\n`;
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'inventario_muebles.csv');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // Función para exportar los datos de las ventas a un archivo CSV
+            function exportSalesToCsv() {
+                if (salesData.length === 0) {
+                    showErrorMessage('No hay datos de ventas para exportar.');
+                    return;
+                }
+
+                // Nuevo formato que incluye costo total y precio total de la venta
+                let csvContent = "Fecha,Ganancia Total,Costo Total,Precio Total,Observaciones,Productos Vendidos\n"; // Encabezado del CSV
+
+                salesData.forEach(sale => {
+                    const saleDate = new Date(sale.date).toLocaleString();
+                    const totalProfit = sale.totalPrice - sale.totalCost;
+                    const observations = sale.observations ? sale.observations.replace(/"/g, '""') : '';
+                    
+                    const productsString = sale.products.map(p => 
+                        `${p.name} (SKU: ${p.sku}, Cantidad: ${p.quantity})`
+                    ).join('; ');
+                    
+                    csvContent += `"${saleDate}",${totalProfit.toFixed(2)},${sale.totalCost.toFixed(2)},${sale.totalPrice.toFixed(2)},"${observations}","${productsString}"\n`;
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'historial_ventas.csv');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // Función para importar datos desde un archivo CSV de inventario
+            function importFromCsv(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    const rows = text.split('\n');
+
+                    const newInventoryItems = [];
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i].trim();
+                        if (row) {
+                             const parts = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+                            if (parts && parts.length >= 6) { // Aseguramos que haya al menos 6 columnas
+                                const [name, sku, description, cost, price, quantity] = parts.map(part => part.trim().replace(/^"|"$/g, ''));
+                                
+                                newInventoryItems.push({
+                                    id: Date.now() + i, // ID único para cada item
+                                    name,
+                                    sku,
+                                    description,
+                                    cost: parseFloat(cost),
+                                    price: parseFloat(price),
+                                    quantity: parseInt(quantity, 10)
+                                });
+                            } else {
+                                console.error("Fila del CSV de inventario con formato incorrecto:", row);
+                            }
+                        }
+                    }
+                    inventoryData = newInventoryItems;
+                    saveDataToLocalStorage();
+                    renderInventory();
+                    populateSalesItems();
+                    showMessage('¡Inventario importado con éxito!');
+                };
+                reader.readAsText(file);
+            }
+            
+            // Función para importar datos desde un archivo CSV de historial de ventas
+            function importSalesFromCsv(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    const rows = text.split('\n');
+
+                    const newSalesItems = [];
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i].trim();
+                        if (row) {
+                            const parts = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+                            if (parts && parts.length >= 6) { // Aseguramos que haya al menos 6 columnas
+                                const [date, totalProfit, totalCost, totalPrice, observations, productsString] = parts.map(part => part.trim().replace(/^"|"$/g, ''));
+                                
+                                const products = [];
+                                const productParts = productsString.split(';').map(p => p.trim()).filter(p => p !== '');
+                                
+                                productParts.forEach(productPart => {
+                                    // Usamos una expresión regular para extraer nombre, SKU y cantidad
+                                    const match = productPart.match(/(.*) \(SKU: (.*?), Cantidad: (\d+)\)/);
+                                    if (match) {
+                                        products.push({
+                                            name: match[1],
+                                            sku: match[2],
+                                            quantity: parseInt(match[3], 10),
+                                        });
+                                    }
+                                });
+
+                                newSalesItems.push({
+                                    date,
+                                    observations,
+                                    products,
+                                    totalCost: parseFloat(totalCost),
+                                    totalPrice: parseFloat(totalPrice),
+                                });
+                            } else {
+                                console.error("Fila del CSV de ventas con formato incorrecto:", row);
+                            }
+                        }
+                    }
+                    salesData = newSalesItems;
+                    saveDataToLocalStorage();
+                    renderSales();
+                    showMessage('¡Historial de ventas importado con éxito!');
+                };
+                reader.readAsText(file);
+            }
+
+            // --- Funciones de Reportes ---
+            
+            // Función principal para generar el reporte
+            function generateReport(period, customStartDate = null, customEndDate = null) {
+                const now = new Date();
+                let startDate, endDate;
+                let title;
+
+                if (period === 'weekly') {
+                    // Calcula el inicio de la semana actual (Lunes)
+                    const dayOfWeek = now.getDay();
+                    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Ajusta para que el Lunes sea el día 1
+                    startDate = new Date(now.setDate(diff));
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(startDate);
+                    endDate.setDate(endDate.getDate() + 6);
+                    endDate.setHours(23, 59, 59, 999);
+                    title = `Reporte Semanal (del ${startDate.toLocaleDateString()})`;
+                } else if (period === 'monthly') {
+                    // Calcula el inicio del mes actual
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    endDate.setHours(23, 59, 59, 999);
+                    title = `Reporte Mensual (${now.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })})`;
+                } else if (period === 'custom' && customStartDate && customEndDate) {
+                    startDate = new Date(customStartDate);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(customEndDate);
+                    endDate.setHours(23, 59, 59, 999);
+                    title = `Reporte Personalizado (del ${startDate.toLocaleDateString()} al ${endDate.toLocaleDateString()})`;
+
+                    if (startDate > endDate) {
+                        showErrorMessage('La fecha de inicio no puede ser posterior a la fecha de fin.');
+                        return;
+                    }
+                } else {
+                     reportContent.classList.remove('show');
+                     showMessage('No se pudo generar el reporte. Por favor, revisa las fechas.', 'error');
+                     return;
+                }
+
+                // Filtra las ventas dentro del período
+                const filteredSales = salesData.filter(sale => {
+                    const saleDate = new Date(sale.date);
+                    return saleDate >= startDate && saleDate <= endDate;
+                });
+                
+                if (filteredSales.length === 0) {
+                     reportContent.classList.remove('show');
+                     showMessage('No hay ventas registradas en este período.', 'info');
+                     return;
+                }
+
+                // Calcula totales y productos más vendidos
+                let totalSales = 0;
+                let totalProfit = 0;
+                const productSales = {}; // Objeto para contar las ventas de cada producto
+
+                filteredSales.forEach(sale => {
+                    totalSales += sale.totalPrice;
+                    totalProfit += (sale.totalPrice - sale.totalCost);
+
+                    sale.products.forEach(product => {
+                        const key = `${product.name} - ${product.sku}`;
+                        if (!productSales[key]) {
+                            productSales[key] = 0;
+                        }
+                        productSales[key] += product.quantity;
+                    });
+                });
+
+                // Convierte el objeto de ventas en un array y lo ordena
+                const sortedProducts = Object.entries(productSales)
+                    .map(([name, quantity]) => ({ name, quantity }))
+                    .sort((a, b) => b.quantity - a.quantity);
+                    
+                renderReport({
+                    title: title,
+                    totalSales: totalSales,
+                    totalProfit: totalProfit,
+                    mostSoldProducts: sortedProducts
+                });
+            }
+
+            // Función para renderizar el reporte en el DOM
+            function renderReport(reportData) {
+                reportContent.innerHTML = `
+                    <h3 class="text-lg font-bold mb-2">${reportData.title}</h3>
+                    <p><strong>Ventas totales:</strong> $${reportData.totalSales.toFixed(2)}</p>
+                    <p><strong>Ganancia total:</strong> $${reportData.totalProfit.toFixed(2)}</p>
+                    <h4 class="font-semibold mt-4 mb-2">Productos más vendidos:</h4>
+                    <ol class="report-list">
+                        ${reportData.mostSoldProducts.map(p => `<li>${p.name} - **${p.quantity} unidades**</li>`).join('')}
+                    </ol>
+                `;
+                reportContent.classList.add('show');
+            }
+
+
+            // --- Manejo de eventos ---
+            
+            // Carga los datos al iniciar la página
+            loadDataFromLocalStorage();
+
+            // Escucha los clics en los botones de las pestañas
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabId = btn.dataset.tab;
+                    switchTab(tabId);
+                });
+            });
+
+            // Escucha el evento 'submit' del formulario de inventario
+            inventoryForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const productName = document.getElementById('productName').value.trim();
+                const sku = document.getElementById('sku').value.trim();
+                const description = document.getElementById('description').value.trim();
+                const cost = parseFloat(document.getElementById('cost').value);
+                const price = parseFloat(document.getElementById('price').value);
+                const quantity = parseInt(document.getElementById('quantity').value, 10);
+
+                if (productName !== '' && sku !== '' && !isNaN(quantity) && quantity >= 0 && !isNaN(cost) && cost >= 0 && !isNaN(price) && price >= 0) {
+                    // Creamos un ID único usando el timestamp
+                    const newItem = {
+                        id: Date.now(),
+                        name: productName,
+                        sku: sku,
+                        description: description,
+                        cost: cost,
+                        price: price,
+                        quantity: quantity
+                    };
+                    
+                    inventoryData.push(newItem);
+                    saveDataToLocalStorage();
+                    renderInventory();
+                    populateSalesItems();
+                    
+                    inventoryForm.reset();
+                    document.getElementById('quantity').value = "1";
+                    document.getElementById('cost').value = "0";
+                    document.getElementById('price').value = "0";
+                    showMessage('¡Mueble añadido con éxito!');
+                }
+            });
+
+            // Escucha los clics en el listado para delegar eventos de botones
+            inventoryList.addEventListener('click', function(e) {
+                const target = e.target;
+                const itemElement = target.closest('.inventory-item');
+                if (!itemElement) return;
+
+                const docId = parseInt(itemElement.dataset.id, 10);
+                const itemIndex = inventoryData.findIndex(item => item.id === docId);
+                
+                if (itemIndex === -1) return;
+
+                if (target.classList.contains('delete-button')) {
+                    inventoryData.splice(itemIndex, 1);
+                    saveDataToLocalStorage();
+                    renderInventory();
+                    populateSalesItems();
+                    showMessage('¡Mueble eliminado!');
+                } else if (target.classList.contains('minus-btn')) {
+                    if (inventoryData[itemIndex].quantity > 0) {
+                        inventoryData[itemIndex].quantity--;
+                        saveDataToLocalStorage();
+                        renderInventory();
+                        populateSalesItems();
+                    }
+                } else if (target.classList.contains('plus-btn')) {
+                    inventoryData[itemIndex].quantity++;
+                    saveDataToLocalStorage();
+                    renderInventory();
+                    populateSalesItems();
+                } else if (target.classList.contains('details-toggle-btn')) {
+                    const details = itemElement.querySelector('.item-details');
+                    details.classList.toggle('show');
+                    target.textContent = details.classList.contains('show') ? 'Ocultar detalles' : 'Mostrar detalles';
+                } else if (target.classList.contains('edit-button')) {
+                    // Cambia el estado a edición y muestra el formulario
+                    itemElement.dataset.editing = 'true';
+                } else if (target.classList.contains('cancel-button')) {
+                    // Cancela la edición y vuelve a la vista normal
+                    itemElement.dataset.editing = 'false';
+                } else if (target.classList.contains('save-button')) {
+                    e.preventDefault(); // Evita que el formulario se envíe
+
+                    const newName = document.getElementById(`edit-name-${docId}`).value.trim();
+                    const newSku = document.getElementById(`edit-sku-${docId}`).value.trim();
+                    const newDescription = document.getElementById(`edit-description-${docId}`).value.trim();
+                    const newCost = parseFloat(document.getElementById(`edit-cost-${docId}`).value);
+                    const newPrice = parseFloat(document.getElementById(`edit-price-${docId}`).value);
+                    
+                    if (newName !== '' && newSku !== '' && !isNaN(newCost) && newCost >= 0 && !isNaN(newPrice) && newPrice >= 0) {
+                        // Actualiza los datos del inventario en el array
+                        inventoryData[itemIndex].name = newName;
+                        inventoryData[itemIndex].sku = newSku;
+                        inventoryData[itemIndex].description = newDescription;
+                        inventoryData[itemIndex].cost = newCost;
+                        inventoryData[itemIndex].price = newPrice;
+
+                        saveDataToLocalStorage();
+                        renderInventory();
+                        populateSalesItems();
+                        showMessage('¡Artículo actualizado con éxito!');
+                    } else {
+                        showErrorMessage('Por favor, completa todos los campos requeridos y asegúrate de que los valores sean válidos.');
+                    }
+                }
+            });
+            
+            // Escucha los clics en la lista de ventas para delegar eventos
+            salesList.addEventListener('click', function(e) {
+                const target = e.target;
+                const saleElement = target.closest('.sales-item');
+                if (!saleElement) return;
+
+                const saleDateId = saleElement.dataset.id;
+                const saleIndex = salesData.findIndex(sale => sale.date === saleDateId);
+
+                if (saleIndex === -1) return;
+
+                if (target.classList.contains('edit-sale-button')) {
+                    // Pre-popular el formulario de edición y mostrarlo
+                    saleElement.dataset.editing = 'true';
+                    const editFormContainer = saleElement.querySelector('.edit-sales-items-container');
+                    const saleToEdit = salesData[saleIndex];
+                    editFormContainer.innerHTML = ''; // Limpiar campos existentes
+                    
+                    saleToEdit.products.forEach((product, index) => {
+                        createSalesItemInputs(product, index, editFormContainer, true);
+                    });
+                } else if (target.classList.contains('cancel-button')) {
+                    saleElement.dataset.editing = 'false';
+                    renderSales(); // Re-renderizar para revertir cambios en UI
+                } else if (target.classList.contains('delete-button')) {
+                    const saleToRemove = salesData[saleIndex];
+                    // Devolver los productos al inventario
+                    saleToRemove.products.forEach(soldProduct => {
+                        const invItem = inventoryData.find(item => item.name === soldProduct.name && item.sku === soldProduct.sku);
+                        if (invItem) {
+                            invItem.quantity += soldProduct.quantity;
+                        }
+                    });
+                    
+                    salesData.splice(saleIndex, 1);
+                    saveDataToLocalStorage();
+                    renderSales();
+                    renderInventory();
+                    populateSalesItems();
+                    showMessage('¡Venta eliminada!');
+                } else if (target.classList.contains('add-sales-item-btn')) {
+                    const editFormContainer = saleElement.querySelector('.edit-sales-items-container');
+                    createSalesItemInputs(null, editFormContainer.children.length, editFormContainer, true);
+                } else if (e.target.closest('.delete-sales-item-btn')) {
+                    const itemDiv = e.target.closest('.form-group');
+                    if (itemDiv) {
+                        itemDiv.remove();
+                    }
+                }
+            });
+
+            salesList.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const target = e.target;
+                if (!target.classList.contains('sales-edit-form')) return;
+
+                const saleElement = target.closest('.sales-item');
+                const saleDateId = saleElement.dataset.id;
+                const saleIndex = salesData.findIndex(sale => sale.date === saleDateId);
+                const saleToUpdate = salesData[saleIndex];
+                
+                const oldProducts = [...saleToUpdate.products];
+                const newProducts = [];
+                let newTotalCost = 0;
+                let newTotalPrice = 0;
+                let isValidUpdate = true;
+
+                const salesItemInputs = saleElement.querySelectorAll('.edit-sales-items-container .form-group');
+
+                for (const itemInput of salesItemInputs) {
+                    const select = itemInput.querySelector('select');
+                    const quantityInput = itemInput.querySelector('input[type="number"]');
+
+                    if (!select || !quantityInput || !select.value || parseInt(quantityInput.value, 10) <= 0) {
+                        isValidUpdate = false;
+                        continue;
+                    }
+                    
+                    const itemId = parseInt(select.value, 10);
+                    const quantityToSell = parseInt(quantityInput.value, 10);
+                    const inventoryItem = inventoryData.find(item => item.id === itemId);
+
+                    if (!inventoryItem) {
+                        isValidUpdate = false;
+                        break;
+                    }
+
+                    // Encontrar el producto anterior en el array de la venta
+                    const oldProduct = oldProducts.find(p => p.name === inventoryItem.name && p.sku === inventoryItem.sku);
+                    const oldQuantity = oldProduct ? oldProduct.quantity : 0;
+                    const quantityDifference = quantityToSell - oldQuantity;
+
+                    if (quantityDifference > 0 && quantityDifference > inventoryItem.quantity) {
+                        showErrorMessage(`No hay suficiente stock de ${inventoryItem.name}. Stock actual: ${inventoryItem.quantity}`);
+                        isValidUpdate = false;
+                        break;
+                    }
+
+                    newProducts.push({
+                        name: inventoryItem.name,
+                        sku: inventoryItem.sku,
+                        quantity: quantityToSell,
+                        cost: inventoryItem.cost,
+                        price: inventoryItem.price,
+                    });
+
+                    newTotalCost += inventoryItem.cost * quantityToSell;
+                    newTotalPrice += inventoryItem.price * quantityToSell;
+                }
+
+                if (isValidUpdate && newProducts.length > 0) {
+                    // Primero, devolver el stock de la venta original
+                    oldProducts.forEach(oldProduct => {
+                         const invItem = inventoryData.find(item => item.name === oldProduct.name && item.sku === oldProduct.sku);
+                         if (invItem) {
+                             invItem.quantity += oldProduct.quantity;
+                         }
+                    });
+                    
+                    // Luego, restar el stock de la nueva venta
+                    newProducts.forEach(newProduct => {
+                        const invItem = inventoryData.find(item => item.name === newProduct.name && item.sku === newProduct.sku);
+                        if (invItem) {
+                            invItem.quantity -= newProduct.quantity;
+                        }
+                    });
+
+                    saleToUpdate.products = newProducts;
+                    saleToUpdate.totalCost = newTotalCost;
+                    saleToUpdate.totalPrice = newTotalPrice;
+                    saleToUpdate.observations = document.getElementById(`edit-sales-observations-${saleDateId}`).value.trim();
+
+                    saveDataToLocalStorage();
+                    renderSales();
+                    renderInventory();
+                    populateSalesItems();
+                    showMessage('¡Venta actualizada con éxito!');
+                } else {
+                    // Si la actualización falla, revertir el inventario
+                    renderSales();
+                    renderInventory();
+                    populateSalesItems();
+                    saleElement.dataset.editing = 'false';
+                }
+            });
+
+
+            // Escucha el evento 'input' del campo de búsqueda para filtrar la lista
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.toLowerCase();
+                const filtered = inventoryData.filter(item => 
+                    item.name.toLowerCase().includes(query) || 
+                    item.sku.toLowerCase().includes(query)
+                );
+                renderInventory(filtered);
+            });
+
+            // Escucha el clic en el botón de exportar inventario
+            exportCsvBtn.addEventListener('click', exportInventoryToCsv);
+            
+            // Escucha el clic en el botón de exportar historial de ventas
+            exportSalesCsvBtn.addEventListener('click', exportSalesToCsv);
+            
+            // Escucha los clics en los botones de reportes
+            weeklyReportBtn.addEventListener('click', () => generateReport('weekly'));
+            monthlyReportBtn.addEventListener('click', () => generateReport('monthly'));
+            customReportBtn.addEventListener('click', () => {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                if (startDate && endDate) {
+                    generateReport('custom', startDate, endDate);
+                } else {
+                    showErrorMessage('Por favor, selecciona una fecha de inicio y una de fin.');
+                }
+            });
+
+            // Escucha el cambio en el input de archivo para importar inventario
+            importCsvInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    importFromCsv(file);
+                }
+            });
+            
+            // Escucha el cambio en el input de archivo para importar historial de ventas
+            importSalesCsvInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    importSalesFromCsv(file);
+                }
+            });
+
+            // Maneja el clic en el botón para añadir otro artículo a la venta
+            addSalesItemBtn.addEventListener('click', () => {
+                createSalesItemInputs(null, salesItemsContainer.children.length, salesItemsContainer);
+            });
+
+            // Maneja la eliminación de un artículo del formulario de ventas
+            salesItemsContainer.addEventListener('click', function(e) {
+                if (e.target.closest('.delete-sales-item-btn')) {
+                    const itemDiv = e.target.closest('.form-group');
+                    if (itemDiv) {
+                        itemDiv.remove();
+                    }
+                }
+            });
+
+            // Escucha el evento 'submit' del formulario de ventas
+            salesForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const soldProducts = [];
+                const salesItemInputs = salesItemsContainer.querySelectorAll('.form-group');
+                const observations = document.getElementById('salesObservations').value.trim();
+                let isValidSale = true;
+
+                let totalSaleCost = 0;
+                let totalSalePrice = 0;
+
+                for (const itemInput of salesItemInputs) {
+                    const select = itemInput.querySelector('select');
+                    const quantityInput = itemInput.querySelector('input[type="number"]');
+
+                    if (!select || !quantityInput || !select.value || parseInt(quantityInput.value, 10) <= 0) {
+                        isValidSale = false;
+                        continue;
+                    }
+
+                    const itemId = parseInt(select.value, 10);
+                    const quantityToSell = parseInt(quantityInput.value, 10);
+                    const inventoryItemIndex = inventoryData.findIndex(item => item.id === itemId);
+
+                    if (inventoryItemIndex !== -1) {
+                        const inventoryItem = inventoryData[inventoryItemIndex];
+                        const currentQuantity = inventoryItem.quantity;
+                        
+                        if (quantityToSell > currentQuantity) {
+                             showErrorMessage(`No hay suficiente stock de ${inventoryItem.name}. Stock actual: ${currentQuantity}`);
+                             isValidSale = false;
+                             break;
+                        }
+
+                        // Registramos el producto vendido
+                        soldProducts.push({
+                            name: inventoryItem.name,
+                            sku: inventoryItem.sku,
+                            quantity: quantityToSell,
+                            cost: inventoryItem.cost,
+                            price: inventoryItem.price,
+                        });
+                        
+                        totalSaleCost += inventoryItem.cost * quantityToSell;
+                        totalSalePrice += inventoryItem.price * quantityToSell;
+
+                        // Actualizamos el inventario en memoria
+                        inventoryData[inventoryItemIndex].quantity -= quantityToSell;
+                    } else {
+                        isValidSale = false;
+                        break;
+                    }
+                }
+
+                if (isValidSale && soldProducts.length > 0) {
+                    const newSale = {
+                        date: new Date().toISOString(),
+                        products: soldProducts,
+                        observations: observations,
+                        totalCost: totalSaleCost,
+                        totalPrice: totalSalePrice,
+                    };
+                    
+                    salesData.push(newSale);
+                    saveDataToLocalStorage();
+                    renderInventory();
+                    renderSales();
+                    populateSalesItems();
+                    
+                    salesForm.reset();
+                    salesItemsContainer.innerHTML = `
+                        <div class="form-group flex-row items-center gap-2">
+                            <label for="itemSelect-0" class="sr-only">Producto</label>
+                            <select id="itemSelect-0" class="form-select w-full" required>
+                                <option value="" disabled selected>Selecciona un producto</option>
+                            </select>
+                            <label for="itemQuantity-0" class="sr-only">Cantidad</label>
+                            <input type="number" id="itemQuantity-0" class="form-input w-20" value="1" min="1" required>
+                        </div>
+                    `;
+                    salesItemCount = 1;
+                    showMessage('¡Venta registrada con éxito!');
+                }
+            });
+        };
+    </script>
+</body>
+</html>
+
