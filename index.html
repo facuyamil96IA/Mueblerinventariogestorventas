@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario y Ventas MLF Muebles la familia</title>
+    <title>Inventario y Ventas MLF Muebles la familia (Local)</title>
     <!-- Importar la fuente Inter de Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <!-- Importar Tailwind CSS para estilos -->
@@ -294,14 +294,17 @@
         .details-toggle-btn:hover {
             background-color: #e5e7eb;
         }
+        
+        .loading-text {
+            display: none;
+            text-align: center;
+            color: #6b7280;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Inventario MLF Muebles la familia</h1>
-        
-        <!-- Muestra el ID de usuario para identificar los datos -->
-        <div id="userIdDisplay" class="text-xs text-center text-gray-500 mb-4 break-words"></div>
 
         <!-- Navegación de pestañas -->
         <div class="tab-nav">
@@ -390,7 +393,7 @@
             </form>
             
             <!-- Mensaje de carga para el inventario -->
-            <p id="inventoryLoading" class="text-center text-gray-500">Cargando inventario...</p>
+            <p id="inventoryLoading" class="loading-text">Cargando inventario...</p>
             
             <!-- Lista donde se mostrarán los artículos -->
             <div id="inventoryList" class="inventory-list">
@@ -438,7 +441,7 @@
             
             <h2 class="text-xl font-bold mt-8 mb-4">Historial de Ventas</h2>
             <!-- Mensaje de carga para el historial de ventas -->
-            <p id="salesLoading" class="text-center text-gray-500">Cargando historial de ventas...</p>
+            <p id="salesLoading" class="loading-text">Cargando historial de ventas...</p>
             
             <div id="salesList" class="sales-list">
                  <!-- Las ventas se inyectarán aquí dinámicamente -->
@@ -450,48 +453,12 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import { 
-            getAuth, 
-            signInAnonymously, 
-            signInWithCustomToken,
-            onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-        import { 
-            getFirestore, 
-            doc, 
-            getDoc, 
-            addDoc, 
-            setDoc, 
-            updateDoc, 
-            deleteDoc, 
-            onSnapshot, 
-            collection,
-            getDocs 
-        } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-        
+    <script>
         // Espera a que el DOM esté completamente cargado para ejecutar el script
         window.onload = function() {
-            // --- Configuración de Firebase (ajustada para Netlify) ---
-            // Usa la configuración proporcionada por el usuario.
-            const firebaseConfig = {
-                apiKey: "AIzaSyDkYh5EhJU5YCvOgeIVCoo1wZpWaaKnb5c",
-                authDomain: "muebleriagestor.firebaseapp.com",
-                projectId: "muebleriagestor",
-                storageBucket: "muebleriagestor.firebasestorage.app",
-                messagingSenderId: "765085925949",
-                appId: "1:765085925949:web:1ab0ff2d140a6a2efda054"
-            };
-            
-            // Para una implementación estática, podemos usar el mismo ID de aplicación
-            const appId = firebaseConfig.projectId;
-            
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-            const auth = getAuth(app);
-            let userId = null;
+            // --- Declaración de variables globales ---
+            let inventoryData = [];
+            let salesData = [];
             
             // --- Selecciona los elementos del DOM ---
             const tabButtons = document.querySelectorAll('.tab-btn');
@@ -506,14 +473,124 @@
             const addSalesItemBtn = document.getElementById('addSalesItemBtn');
             const salesItemsContainer = document.getElementById('salesItemsContainer');
             const exportSalesCsvBtn = document.getElementById('exportSalesCsvBtn');
-            const userIdDisplay = document.getElementById('userIdDisplay');
             const inventoryLoading = document.getElementById('inventoryLoading');
             const salesLoading = document.getElementById('salesLoading');
             
             // Un contador para los campos de venta dinámicos
             let salesItemCount = 1;
 
-            // --- Funciones de la aplicación ---
+            // --- Funciones de almacenamiento local ---
+            
+            // Función para guardar los datos en localStorage
+            function saveDataToLocalStorage() {
+                localStorage.setItem('inventoryData', JSON.stringify(inventoryData));
+                localStorage.setItem('salesData', JSON.stringify(salesData));
+            }
+            
+            // Función para cargar los datos desde localStorage
+            function loadDataFromLocalStorage() {
+                const storedInventory = localStorage.getItem('inventoryData');
+                const storedSales = localStorage.getItem('salesData');
+                
+                if (storedInventory) {
+                    inventoryData = JSON.parse(storedInventory);
+                }
+                
+                if (storedSales) {
+                    salesData = JSON.parse(storedSales);
+                }
+                
+                // Renderiza los datos cargados
+                renderInventory();
+                renderSales();
+                populateSalesItems();
+            }
+
+            // --- Funciones de renderizado del DOM ---
+            
+            // Renderiza la lista de inventario completa
+            function renderInventory(filteredData = inventoryData) {
+                inventoryList.innerHTML = '';
+                if (filteredData.length === 0) {
+                    inventoryList.innerHTML = '<p class="text-center text-gray-500">No hay artículos en el inventario.</p>';
+                    return;
+                }
+                
+                filteredData.forEach(item => {
+                    const newItem = createInventoryItemElement(item);
+                    inventoryList.appendChild(newItem);
+                });
+            }
+            
+            // Renderiza la lista de ventas completa
+            function renderSales() {
+                salesList.innerHTML = '';
+                if (salesData.length === 0) {
+                    salesList.innerHTML = '<p class="text-center text-gray-500">No hay historial de ventas.</p>';
+                    return;
+                }
+                
+                // Muestra las ventas más recientes primero
+                salesData.slice().reverse().forEach(sale => {
+                    const newSaleItem = createSalesItemElement(sale);
+                    salesList.appendChild(newSaleItem);
+                });
+            }
+
+            // Crea el elemento HTML para un artículo del inventario
+            function createInventoryItemElement(item) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'inventory-item';
+                itemDiv.dataset.id = item.id;
+                itemDiv.dataset.sku = item.sku;
+                itemDiv.dataset.name = item.name;
+                itemDiv.dataset.description = item.description;
+                itemDiv.dataset.cost = item.cost;
+                itemDiv.dataset.price = item.price;
+
+                itemDiv.innerHTML = `
+                    <div class="item-header">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-sku">SKU: ${item.sku}</span>
+                    </div>
+                    <div class="item-actions">
+                        <div class="quantity-control">
+                            <button type="button" class="quantity-btn minus-btn">-</button>
+                            <span class="item-quantity">${item.quantity}</span>
+                            <button type="button" class="quantity-btn plus-btn">+</button>
+                        </div>
+                        <button type="button" class="delete-button">Eliminar</button>
+                    </div>
+                    <button type="button" class="details-toggle-btn">Mostrar detalles</button>
+                    <div class="item-details">
+                        <p><strong>Descripción:</strong> ${item.description}</p>
+                        <p><strong>Costo:</strong> $${parseFloat(item.cost).toFixed(2)}</p>
+                        <p><strong>Precio:</strong> $${parseFloat(item.price).toFixed(2)}</p>
+                    </div>
+                `;
+                return itemDiv;
+            }
+            
+            // Crea el elemento HTML para un artículo de venta
+            function createSalesItemElement(sale) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'sales-item';
+                itemDiv.innerHTML = `
+                    <div class="item-header">
+                        <span class="item-name">Venta</span>
+                        <span class="item-sku">${new Date(sale.date).toLocaleString()}</span>
+                    </div>
+                    <div class="item-details show">
+                        <p><strong>Productos vendidos:</strong></p>
+                        <ul>
+                            ${sale.products.map(p => `<li>- ${p.name} (${p.sku}) x${p.quantity} ($${(p.price * p.quantity).toFixed(2)})</li>`).join('')}
+                        </ul>
+                        <p><strong>Ganancia total:</strong> $${(sale.totalPrice - sale.totalCost).toFixed(2)}</p>
+                        ${sale.observations ? `<p><strong>Observaciones:</strong> ${sale.observations}</p>` : ''}
+                    </div>
+                `;
+                return itemDiv;
+            }
 
             // Función para cambiar de pestaña
             function switchTab(tabId) {
@@ -526,239 +603,31 @@
                 if (activeBtn) activeBtn.classList.add('active');
                 if (activeContent) activeContent.classList.remove('hidden');
 
-                // Si cambiamos a la pestaña de ventas, actualizamos el selector de productos
-                if (tabId === 'salesTab' && userId) {
-                    // La función onSnapshot se encarga de llamar a populateSalesItems
+                if (tabId === 'salesTab') {
+                    populateSalesItems();
                 }
-            }
-
-            // Función para crear un nuevo elemento de artículo del inventario
-            function createInventoryItem(docId, name, sku, quantity, description = '', cost = 0, price = 0) {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'inventory-item';
-                itemDiv.dataset.id = docId;
-                itemDiv.dataset.sku = sku;
-                itemDiv.dataset.name = name;
-                itemDiv.dataset.description = description;
-                itemDiv.dataset.cost = cost;
-                itemDiv.dataset.price = price;
-
-                itemDiv.innerHTML = `
-                    <div class="item-header">
-                        <span class="item-name">${name}</span>
-                        <span class="item-sku">SKU: ${sku}</span>
-                    </div>
-                    <div class="item-actions">
-                        <div class="quantity-control">
-                            <button type="button" class="quantity-btn minus-btn">-</button>
-                            <span class="item-quantity">${quantity}</span>
-                            <button type="button" class="quantity-btn plus-btn">+</button>
-                        </div>
-                        <button type="button" class="delete-button">Eliminar</button>
-                    </div>
-                    <button type="button" class="details-toggle-btn">Mostrar detalles</button>
-                    <div class="item-details">
-                        <p><strong>Descripción:</strong> ${description}</p>
-                        <p><strong>Costo:</strong> $${parseFloat(cost).toFixed(2)}</p>
-                        <p><strong>Precio:</strong> $${parseFloat(price).toFixed(2)}</p>
-                    </div>
-                `;
-                return itemDiv;
-            }
-            
-            // Función para crear un elemento de venta en el historial
-            function createSalesItem(docId, saleData) {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'sales-item';
-                itemDiv.dataset.id = docId;
-                const totalSalePrice = saleData.products.reduce((total, product) => total + (product.price * product.quantity), 0);
-                const totalSaleCost = saleData.products.reduce((total, product) => total + (product.cost * product.quantity), 0);
-                const totalProfit = totalSalePrice - totalSaleCost;
-
-                itemDiv.innerHTML = `
-                    <div class="item-header">
-                        <span class="item-name">Venta</span>
-                        <span class="item-sku">${new Date(saleData.date).toLocaleString()}</span>
-                    </div>
-                    <div class="item-details show">
-                        <p><strong>Productos vendidos:</strong></p>
-                        <ul>
-                            ${saleData.products.map(p => `<li>- ${p.name} (${p.sku}) x${p.quantity} ($${(p.price * p.quantity).toFixed(2)})</li>`).join('')}
-                        </ul>
-                        <p><strong>Ganancia total:</strong> $${totalProfit.toFixed(2)}</p>
-                        ${saleData.observations ? `<p><strong>Observaciones:</strong> ${saleData.observations}</p>` : ''}
-                    </div>
-                `;
-                return itemDiv;
-            }
-
-            // Función para guardar una actualización en un documento de Firestore
-            async function updateInventoryItem(docId, data) {
-                try {
-                    const docRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, docId);
-                    await updateDoc(docRef, data);
-                } catch (e) {
-                    console.error("Error updating document: ", e);
-                }
-            }
-
-            // Función para eliminar un documento de Firestore
-            async function deleteInventoryItem(docId) {
-                try {
-                    const docRef = doc(db, `artifacts/${appId}/users/${userId}/inventory`, docId);
-                    await deleteDoc(docRef);
-                } catch (e) {
-                    console.error("Error deleting document: ", e);
-                }
-            }
-
-            // Función para exportar los datos del inventario a un archivo CSV
-            async function exportInventoryToCsv() {
-                if (!userId) {
-                    showErrorMessage('Espera a que los datos se carguen para exportar.');
-                    return;
-                }
-                try {
-                    const inventoryCollection = collection(db, `artifacts/${appId}/users/${userId}/inventory`);
-                    const snapshot = await getDocs(inventoryCollection);
-                    let csvContent = "Nombre,SKU,Descripción,Costo,Precio,Cantidad\n"; // Encabezado del CSV
-
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const sanitizedDescription = data.description.replace(/"/g, '""');
-                        csvContent += `${data.name},${data.sku},"${sanitizedDescription}",${data.cost},${data.price},${data.quantity}\n`;
-                    });
-
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    
-                    const link = document.createElement('a');
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', 'inventario_muebles.csv');
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } catch (e) {
-                    console.error("Error al exportar el inventario CSV:", e);
-                    showErrorMessage('Error al exportar el inventario.');
-                }
-            }
-            
-            // Función para exportar los datos de las ventas a un archivo CSV
-            async function exportSalesToCsv() {
-                if (!userId) {
-                    showErrorMessage('Espera a que los datos se carguen para exportar.');
-                    return;
-                }
-                try {
-                    const salesCollection = collection(db, `artifacts/${appId}/users/${userId}/sales`);
-                    const snapshot = await getDocs(salesCollection);
-                    
-                    if (snapshot.empty) {
-                        showErrorMessage('No hay datos de ventas para exportar.');
-                        return;
-                    }
-
-                    let csvContent = "Fecha,Ganancia Total,Observaciones,Productos Vendidos\n"; // Encabezado del CSV
-
-                    snapshot.forEach(doc => {
-                        const sale = doc.data();
-                        const saleDate = new Date(sale.date).toLocaleString();
-                        const totalSaleCost = sale.products.reduce((total, p) => total + (p.cost * p.quantity), 0);
-                        const totalSalePrice = sale.products.reduce((total, p) => total + (p.price * p.quantity), 0);
-                        const totalProfit = totalSalePrice - totalSaleCost;
-                        const observations = sale.observations ? sale.observations.replace(/"/g, '""') : '';
-                        
-                        const productsString = sale.products.map(p => 
-                            `${p.name} (SKU: ${p.sku}, Cantidad: ${p.quantity})`
-                        ).join('; ');
-                        
-                        csvContent += `"${saleDate}",${totalProfit.toFixed(2)},"${observations}","${productsString}"\n`;
-                    });
-
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    
-                    const link = document.createElement('a');
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', 'historial_ventas.csv');
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } catch (e) {
-                    console.error("Error al exportar el historial de ventas CSV:", e);
-                    showErrorMessage('Error al exportar el historial de ventas.');
-                }
-            }
-
-            // Función para importar datos desde un archivo CSV
-            async function importFromCsv(file) {
-                if (!userId) {
-                    showErrorMessage('Por favor, espera a que la autenticación se complete.');
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = async function(e) {
-                    const text = e.target.result;
-                    const rows = text.split('\n');
-                    inventoryList.innerHTML = ''; // Limpiamos la lista para reconstruirla
-
-                    for (let i = 1; i < rows.length; i++) {
-                        const row = rows[i].trim();
-                        if (row) {
-                             const parts = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
-                            if (parts && parts.length === 6) {
-                                const [name, sku, description, cost, price, quantity] = parts.map(part => part.trim().replace(/^"|"$/g, ''));
-                                
-                                try {
-                                    // Añadimos el documento a Firestore
-                                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/inventory`), {
-                                        name,
-                                        sku,
-                                        description,
-                                        cost: parseFloat(cost),
-                                        price: parseFloat(price),
-                                        quantity: parseInt(quantity, 10)
-                                    });
-                                } catch (e) {
-                                    console.error("Error al importar el artículo:", e);
-                                    showErrorMessage('Error al importar un artículo del CSV.');
-                                }
-                            } else {
-                                console.error("Fila del CSV con formato incorrecto:", row);
-                            }
-                        }
-                    }
-                };
-                reader.readAsText(file);
             }
             
             // Función para popular el select de productos en el formulario de ventas
-            function populateSalesItems(inventoryData) {
-                // Buscamos todos los select y los populamos
+            function populateSalesItems() {
                 const selects = salesItemsContainer.querySelectorAll('.form-select');
                 selects.forEach(select => {
                     const currentValue = select.value;
                     select.innerHTML = '<option value="" disabled selected>Selecciona un producto</option>';
-                    if (inventoryData) {
-                        inventoryData.forEach(item => {
-                            const name = item.name;
-                            const sku = item.sku;
-                            const quantity = item.quantity;
-                            if (quantity > 0) {
-                                const option = document.createElement('option');
-                                option.value = item.docId; // Ahora el valor es el ID del documento
-                                option.textContent = `${name} (SKU: ${sku}, Cantidad: ${quantity})`;
-                                select.appendChild(option);
-                            }
-                        });
-                    }
+                    inventoryData.forEach(item => {
+                        if (item.quantity > 0) {
+                            const option = document.createElement('option');
+                            option.value = item.id;
+                            option.textContent = `${item.name} (SKU: ${item.sku}, Cantidad: ${item.quantity})`;
+                            select.appendChild(option);
+                        }
+                    });
                     if (currentValue) {
                         select.value = currentValue;
                     }
                 });
             }
-
+            
             // Función para mostrar mensajes de error/éxito
             function showMessage(message, type = 'success') {
                 const messageBox = document.createElement('div');
@@ -781,72 +650,103 @@
                 showMessage(message, 'error');
             }
             
-            // --- Autenticación y Carga de Datos (ajustado para Netlify) ---
-            // Primero intentamos iniciar sesión de forma anónima
-            signInAnonymously(auth).then(() => {
-                 onAuthStateChanged(auth, async (user) => {
-                     if (user) {
-                         userId = user.uid;
-                         userIdDisplay.textContent = `ID de Usuario: ${userId}`;
-                         console.log("Usuario autenticado. ID:", userId);
-     
-                         // Escuchamos los cambios en el inventario en tiempo real
-                         onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/inventory`), (snapshot) => {
-                             inventoryLoading.style.display = 'none'; // Ocultamos el mensaje de carga
-                             inventoryList.innerHTML = ''; // Limpiamos la lista
-     
-                             const inventoryData = [];
-                             snapshot.forEach((doc) => {
-                                 const data = doc.data();
-                                 const newItem = createInventoryItem(doc.id, data.name, data.sku, data.quantity, data.description, data.cost, data.price);
-                                 inventoryList.appendChild(newItem);
-                                 // Almacenamos los datos temporalmente para el selector de ventas
-                                 inventoryData.push({ ...data, docId: doc.id });
-                             });
-     
-                             // Si no hay inventario, mostramos un mensaje
-                             if (snapshot.empty) {
-                                  inventoryList.innerHTML = '<p class="text-center text-gray-500">No hay artículos en el inventario.</p>';
-                             }
-                             
-                             populateSalesItems(inventoryData);
-                         }, (error) => {
-                             console.error("Error al escuchar el inventario:", error);
-                             showErrorMessage('Error al cargar el inventario.');
-                         });
-                         
-                         // Escuchamos los cambios en el historial de ventas en tiempo real
-                         onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/sales`), (snapshot) => {
-                             salesLoading.style.display = 'none'; // Ocultamos el mensaje de carga
-                             salesList.innerHTML = ''; // Limpiamos la lista
-                             
-                             snapshot.forEach((doc) => {
-                                 const data = doc.data();
-                                 const newSaleItem = createSalesItem(doc.id, data);
-                                 salesList.prepend(newSaleItem);
-                             });
-     
-                              // Si no hay ventas, mostramos un mensaje
-                             if (snapshot.empty) {
-                                  salesList.innerHTML = '<p class="text-center text-gray-500">No hay historial de ventas.</p>';
-                             }
-                         }, (error) => {
-                             console.error("Error al escuchar el historial de ventas:", error);
-                             showErrorMessage('Error al cargar el historial de ventas.');
-                         });
-     
-                     } else {
-                         // Esto no debería ocurrir, pero lo dejamos como fallback
-                         console.log("Usuario no autenticado, intentando iniciar sesión de nuevo.");
-                     }
-                 });
-            }).catch((error) => {
-                console.error("Error en la autenticación anónima:", error);
-                showErrorMessage('Error al autenticar. Intenta recargar la página.');
-            });
+            // Función para exportar los datos del inventario a un archivo CSV
+            function exportInventoryToCsv() {
+                if (inventoryData.length === 0) {
+                    showErrorMessage('No hay datos en el inventario para exportar.');
+                    return;
+                }
+                let csvContent = "Nombre,SKU,Descripción,Costo,Precio,Cantidad\n"; // Encabezado del CSV
+                inventoryData.forEach(item => {
+                    const sanitizedDescription = item.description.replace(/"/g, '""');
+                    csvContent += `${item.name},${item.sku},"${sanitizedDescription}",${item.cost},${item.price},${item.quantity}\n`;
+                });
 
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'inventario_muebles.csv');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // Función para exportar los datos de las ventas a un archivo CSV
+            function exportSalesToCsv() {
+                if (salesData.length === 0) {
+                    showErrorMessage('No hay datos de ventas para exportar.');
+                    return;
+                }
+
+                let csvContent = "Fecha,Ganancia Total,Observaciones,Productos Vendidos\n"; // Encabezado del CSV
+
+                salesData.forEach(sale => {
+                    const saleDate = new Date(sale.date).toLocaleString();
+                    const totalProfit = sale.totalPrice - sale.totalCost;
+                    const observations = sale.observations ? sale.observations.replace(/"/g, '""') : '';
+                    
+                    const productsString = sale.products.map(p => 
+                        `${p.name} (SKU: ${p.sku}, Cantidad: ${p.quantity})`
+                    ).join('; ');
+                    
+                    csvContent += `"${saleDate}",${totalProfit.toFixed(2)},"${observations}","${productsString}"\n`;
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'historial_ventas.csv');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // Función para importar datos desde un archivo CSV
+            function importFromCsv(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    const rows = text.split('\n');
+
+                    const newInventoryItems = [];
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i].trim();
+                        if (row) {
+                             const parts = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+                            if (parts && parts.length === 6) {
+                                const [name, sku, description, cost, price, quantity] = parts.map(part => part.trim().replace(/^"|"$/g, ''));
+                                
+                                newInventoryItems.push({
+                                    id: Date.now() + i, // ID único para cada item
+                                    name,
+                                    sku,
+                                    description,
+                                    cost: parseFloat(cost),
+                                    price: parseFloat(price),
+                                    quantity: parseInt(quantity, 10)
+                                });
+                            } else {
+                                console.error("Fila del CSV con formato incorrecto:", row);
+                            }
+                        }
+                    }
+                    inventoryData = newInventoryItems;
+                    saveDataToLocalStorage();
+                    renderInventory();
+                    populateSalesItems();
+                    showMessage('¡Inventario importado con éxito!');
+                };
+                reader.readAsText(file);
+            }
 
             // --- Manejo de eventos ---
+            
+            // Carga los datos al iniciar la página
+            loadDataFromLocalStorage();
 
             // Escucha los clics en los botones de las pestañas
             tabButtons.forEach(btn => {
@@ -857,13 +757,8 @@
             });
 
             // Escucha el evento 'submit' del formulario de inventario
-            inventoryForm.addEventListener('submit', async function(e) {
+            inventoryForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-
-                if (!userId) {
-                    showErrorMessage('Por favor, espera a que la autenticación se complete.');
-                    return;
-                }
 
                 const productName = document.getElementById('productName').value.trim();
                 const sku = document.getElementById('sku').value.trim();
@@ -873,54 +768,61 @@
                 const quantity = parseInt(document.getElementById('quantity').value, 10);
 
                 if (productName !== '' && sku !== '' && !isNaN(quantity) && quantity >= 0 && !isNaN(cost) && cost >= 0 && !isNaN(price) && price >= 0) {
-                    try {
-                        await addDoc(collection(db, `artifacts/${appId}/users/${userId}/inventory`), {
-                            name: productName,
-                            sku: sku,
-                            description: description,
-                            cost: cost,
-                            price: price,
-                            quantity: quantity
-                        });
-                        inventoryForm.reset();
-                        document.getElementById('quantity').value = "1";
-                        document.getElementById('cost').value = "0";
-                        document.getElementById('price').value = "0";
-                        showMessage('¡Mueble añadido con éxito!');
-                    } catch (e) {
-                        console.error("Error adding document: ", e);
-                        showErrorMessage('Error al añadir el mueble.');
-                    }
+                    // Creamos un ID único usando el timestamp
+                    const newItem = {
+                        id: Date.now(),
+                        name: productName,
+                        sku: sku,
+                        description: description,
+                        cost: cost,
+                        price: price,
+                        quantity: quantity
+                    };
+                    
+                    inventoryData.push(newItem);
+                    saveDataToLocalStorage();
+                    renderInventory();
+                    populateSalesItems();
+                    
+                    inventoryForm.reset();
+                    document.getElementById('quantity').value = "1";
+                    document.getElementById('cost').value = "0";
+                    document.getElementById('price').value = "0";
+                    showMessage('¡Mueble añadido con éxito!');
                 }
             });
 
             // Escucha los clics en el listado para delegar eventos de botones
             inventoryList.addEventListener('click', function(e) {
                 const target = e.target;
-                const item = target.closest('.inventory-item');
-                if (!item) return;
+                const itemElement = target.closest('.inventory-item');
+                if (!itemElement) return;
 
-                const docId = item.dataset.id;
+                const docId = parseInt(itemElement.dataset.id, 10);
+                const itemIndex = inventoryData.findIndex(item => item.id === docId);
+                
+                if (itemIndex === -1) return;
 
                 if (target.classList.contains('delete-button')) {
-                    deleteInventoryItem(docId);
+                    inventoryData.splice(itemIndex, 1);
+                    saveDataToLocalStorage();
+                    renderInventory();
+                    populateSalesItems();
                     showMessage('¡Mueble eliminado!');
                 } else if (target.classList.contains('minus-btn')) {
-                    const quantitySpan = item.querySelector('.item-quantity');
-                    let quantity = parseInt(quantitySpan.textContent, 10);
-                    if (quantity > 0) {
-                        quantity--;
-                        quantitySpan.textContent = quantity;
-                        updateInventoryItem(docId, { quantity: quantity });
+                    if (inventoryData[itemIndex].quantity > 0) {
+                        inventoryData[itemIndex].quantity--;
+                        saveDataToLocalStorage();
+                        renderInventory();
+                        populateSalesItems();
                     }
                 } else if (target.classList.contains('plus-btn')) {
-                    const quantitySpan = item.querySelector('.item-quantity');
-                    let quantity = parseInt(quantitySpan.textContent, 10);
-                    quantity++;
-                    quantitySpan.textContent = quantity;
-                    updateInventoryItem(docId, { quantity: quantity });
+                    inventoryData[itemIndex].quantity++;
+                    saveDataToLocalStorage();
+                    renderInventory();
+                    populateSalesItems();
                 } else if (target.classList.contains('details-toggle-btn')) {
-                    const details = item.querySelector('.item-details');
+                    const details = itemElement.querySelector('.item-details');
                     details.classList.toggle('show');
                     target.textContent = details.classList.contains('show') ? 'Ocultar detalles' : 'Mostrar detalles';
                 }
@@ -929,17 +831,11 @@
             // Escucha el evento 'input' del campo de búsqueda para filtrar la lista
             searchInput.addEventListener('input', function(e) {
                 const query = e.target.value.toLowerCase();
-                const items = inventoryList.querySelectorAll('.inventory-item');
-
-                items.forEach(item => {
-                    const name = item.dataset.name.toLowerCase();
-                    const sku = item.dataset.sku.toLowerCase();
-                    if (name.includes(query) || sku.includes(query)) {
-                        item.style.display = 'flex';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
+                const filtered = inventoryData.filter(item => 
+                    item.name.toLowerCase().includes(query) || 
+                    item.sku.toLowerCase().includes(query)
+                );
+                renderInventory(filtered);
             });
 
             // Escucha el clic en el botón de exportar inventario
@@ -974,7 +870,7 @@
                     </button>
                 `;
                 salesItemsContainer.appendChild(newSalesItemDiv);
-                // No se llama a populateSalesItems aquí, ya que el listener se encarga de eso.
+                populateSalesItems();
                 salesItemCount++;
             });
 
@@ -989,46 +885,32 @@
             });
 
             // Escucha el evento 'submit' del formulario de ventas
-            salesForm.addEventListener('submit', async function(e) {
+            salesForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-
-                if (!userId) {
-                    showErrorMessage('Por favor, espera a que la autenticación se complete.');
-                    return;
-                }
 
                 const soldProducts = [];
                 const salesItemInputs = salesItemsContainer.querySelectorAll('.form-group');
                 const observations = document.getElementById('salesObservations').value.trim();
-                const inventoryData = [];
-
-                // Re-obtenemos los datos del inventario de la UI para la validación
-                inventoryList.querySelectorAll('.inventory-item').forEach(item => {
-                    inventoryData.push({
-                        docId: item.dataset.id,
-                        name: item.dataset.name,
-                        sku: item.dataset.sku,
-                        quantity: parseInt(item.querySelector('.item-quantity').textContent, 10),
-                        cost: parseFloat(item.dataset.cost),
-                        price: parseFloat(item.dataset.price),
-                    });
-                });
-
                 let isValidSale = true;
+
+                let totalSaleCost = 0;
+                let totalSalePrice = 0;
+
                 for (const itemInput of salesItemInputs) {
                     const select = itemInput.querySelector('select');
                     const quantityInput = itemInput.querySelector('input[type="number"]');
 
-                    if (!select || !quantityInput || !select.value || quantityInput.value <= 0) {
+                    if (!select || !quantityInput || !select.value || parseInt(quantityInput.value, 10) <= 0) {
                         isValidSale = false;
                         continue;
                     }
 
-                    const docId = select.value;
+                    const itemId = parseInt(select.value, 10);
                     const quantityToSell = parseInt(quantityInput.value, 10);
-                    const inventoryItem = inventoryData.find(item => item.docId === docId);
+                    const inventoryItemIndex = inventoryData.findIndex(item => item.id === itemId);
 
-                    if (inventoryItem) {
+                    if (inventoryItemIndex !== -1) {
+                        const inventoryItem = inventoryData[inventoryItemIndex];
                         const currentQuantity = inventoryItem.quantity;
                         
                         if (quantityToSell > currentQuantity) {
@@ -1046,9 +928,11 @@
                             price: inventoryItem.price,
                         });
                         
-                        // Actualizamos el inventario en Firestore
-                        await updateInventoryItem(docId, { quantity: currentQuantity - quantityToSell });
+                        totalSaleCost += inventoryItem.cost * quantityToSell;
+                        totalSalePrice += inventoryItem.price * quantityToSell;
 
+                        // Actualizamos el inventario en memoria
+                        inventoryData[inventoryItemIndex].quantity -= quantityToSell;
                     } else {
                         isValidSale = false;
                         break;
@@ -1056,35 +940,33 @@
                 }
 
                 if (isValidSale && soldProducts.length > 0) {
-                    try {
-                        // Creamos el objeto de la nueva venta
-                        const newSale = {
-                            date: new Date().toISOString(),
-                            products: soldProducts,
-                            observations: observations
-                        };
-                        
-                        await addDoc(collection(db, `artifacts/${appId}/users/${userId}/sales`), newSale);
-                        
-                        // Limpiamos el formulario y actualizamos los selects
-                        salesForm.reset();
-                        salesItemsContainer.innerHTML = `
-                            <div class="form-group flex-row items-center gap-2">
-                                <label for="itemSelect-0" class="sr-only">Producto</label>
-                                <select id="itemSelect-0" class="form-select w-full" required>
-                                    <option value="" disabled selected>Selecciona un producto</option>
-                                </select>
-                                <label for="itemQuantity-0" class="sr-only">Cantidad</label>
-                                <input type="number" id="itemQuantity-0" class="form-input w-20" value="1" min="1" required>
-                            </div>
-                        `;
-                        salesItemCount = 1;
-                        populateSalesItems(inventoryData);
-                        showMessage('¡Venta registrada con éxito!');
-                    } catch (e) {
-                        console.error("Error registering sale: ", e);
-                        showErrorMessage('Error al registrar la venta.');
-                    }
+                    const newSale = {
+                        date: new Date().toISOString(),
+                        products: soldProducts,
+                        observations: observations,
+                        totalCost: totalSaleCost,
+                        totalPrice: totalSalePrice,
+                    };
+                    
+                    salesData.push(newSale);
+                    saveDataToLocalStorage();
+                    renderInventory();
+                    renderSales();
+                    populateSalesItems();
+                    
+                    salesForm.reset();
+                    salesItemsContainer.innerHTML = `
+                        <div class="form-group flex-row items-center gap-2">
+                            <label for="itemSelect-0" class="sr-only">Producto</label>
+                            <select id="itemSelect-0" class="form-select w-full" required>
+                                <option value="" disabled selected>Selecciona un producto</option>
+                            </select>
+                            <label for="itemQuantity-0" class="sr-only">Cantidad</label>
+                            <input type="number" id="itemQuantity-0" class="form-input w-20" value="1" min="1" required>
+                        </div>
+                    `;
+                    salesItemCount = 1;
+                    showMessage('¡Venta registrada con éxito!');
                 }
             });
         };
