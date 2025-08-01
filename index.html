@@ -450,7 +450,6 @@
         import { 
             getAuth, 
             signInAnonymously, 
-            signInWithCustomToken, 
             onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
@@ -468,10 +467,19 @@
         // Espera a que el DOM esté completamente cargado para ejecutar el script
         window.onload = function() {
             // --- Configuración de Firebase ---
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            // IMPORTANTE: DEBES REEMPLAZAR ESTE OBJETO CON TU PROPIA CONFIGURACIÓN DE PROYECTO DE FIREBASE.
+            // Puedes encontrarla en la Consola de Firebase > Configuración del proyecto > Tus aplicaciones.
+            const firebaseConfig = {
+              apiKey: "AIzaSyCkOsMBBYGxGuBTzvGYtyo-bQRz-_iLTY8",
+              authDomain: "muebleria-e02f9.firebaseapp.com",
+              projectId: "muebleria-e02f9",
+              storageBucket: "muebleria-e02f9.firebasestorage.app",
+              messagingSenderId: "208968978957",
+              appId: "1:208968978957:web:3305d873250139452c3b44"
+            };
 
+            const appId = firebaseConfig.projectId; // Usamos el ID del proyecto como ID de la app.
+            
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
             const auth = getAuth(app);
@@ -816,11 +824,7 @@
                     // Si no hay un usuario autenticado, iniciamos sesión anónimamente
                     console.log("Usuario no autenticado, iniciando sesión...");
                     try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
+                        await signInAnonymously(auth);
                     } catch (error) {
                         console.error("Error en la autenticación:", error);
                         showErrorMessage('Error al autenticar. Intenta recargar la página.');
