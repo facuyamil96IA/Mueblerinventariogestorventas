@@ -261,6 +261,32 @@
         .csv-button:active {
             transform: scale(0.98);
         }
+        
+        /* Estilos para los botones de importación */
+        .csv-import-button {
+            flex-grow: 1;
+            padding: 12px 20px;
+            background-color: #3b82f6; /* Usar un color diferente para distinguirlo */
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .csv-import-button:hover {
+            background-color: #2563eb;
+        }
+        
+        .csv-import-button.sales {
+            background-color: #60a5fa; /* Color para el botón de ventas */
+        }
+        
+        .csv-import-button.sales:hover {
+            background-color: #3b82f6;
+        }
 
         /* Estilos para la sección de detalles adicionales */
         .item-details {
@@ -403,7 +429,7 @@
             <!-- Botones para importar/exportar CSV -->
             <div class="csv-actions">
                 <button type="button" id="exportCsvBtn" class="csv-button">Exportar Inventario CSV</button>
-                <label for="importCsvInput" class="csv-button text-center">Importar Inventario CSV</label>
+                <label for="importCsvInput" class="csv-import-button text-center">Importar Inventario CSV</label>
                 <input type="file" id="importCsvInput" accept=".csv" class="hidden">
             </div>
         </div>
@@ -449,6 +475,8 @@
             
             <div class="csv-actions">
                 <button type="button" id="exportSalesCsvBtn" class="csv-button bg-blue-500 hover:bg-blue-600">Exportar Historial de Ventas CSV</button>
+                <label for="importSalesCsvInput" class="csv-import-button sales text-center">Importar Historial de Ventas CSV</label>
+                <input type="file" id="importSalesCsvInput" accept=".csv" class="hidden">
             </div>
         </div>
     </div>
@@ -473,6 +501,7 @@
             const addSalesItemBtn = document.getElementById('addSalesItemBtn');
             const salesItemsContainer = document.getElementById('salesItemsContainer');
             const exportSalesCsvBtn = document.getElementById('exportSalesCsvBtn');
+            const importSalesCsvInput = document.getElementById('importSalesCsvInput');
             const inventoryLoading = document.getElementById('inventoryLoading');
             const salesLoading = document.getElementById('salesLoading');
             
@@ -575,6 +604,7 @@
             function createSalesItemElement(sale) {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'sales-item';
+                const totalProfit = (sale.totalPrice - sale.totalCost).toFixed(2);
                 itemDiv.innerHTML = `
                     <div class="item-header">
                         <span class="item-name">Venta</span>
@@ -583,9 +613,9 @@
                     <div class="item-details show">
                         <p><strong>Productos vendidos:</strong></p>
                         <ul>
-                            ${sale.products.map(p => `<li>- ${p.name} (${p.sku}) x${p.quantity} ($${(p.price * p.quantity).toFixed(2)})</li>`).join('')}
+                            ${sale.products.map(p => `<li>- ${p.name} (SKU: ${p.sku}) x${p.quantity}</li>`).join('')}
                         </ul>
-                        <p><strong>Ganancia total:</strong> $${(sale.totalPrice - sale.totalCost).toFixed(2)}</p>
+                        <p><strong>Ganancia total:</strong> $${totalProfit}</p>
                         ${sale.observations ? `<p><strong>Observaciones:</strong> ${sale.observations}</p>` : ''}
                     </div>
                 `;
@@ -680,7 +710,8 @@
                     return;
                 }
 
-                let csvContent = "Fecha,Ganancia Total,Observaciones,Productos Vendidos\n"; // Encabezado del CSV
+                // Nuevo formato que incluye costo total y precio total de la venta
+                let csvContent = "Fecha,Ganancia Total,Costo Total,Precio Total,Observaciones,Productos Vendidos\n"; // Encabezado del CSV
 
                 salesData.forEach(sale => {
                     const saleDate = new Date(sale.date).toLocaleString();
@@ -691,7 +722,7 @@
                         `${p.name} (SKU: ${p.sku}, Cantidad: ${p.quantity})`
                     ).join('; ');
                     
-                    csvContent += `"${saleDate}",${totalProfit.toFixed(2)},"${observations}","${productsString}"\n`;
+                    csvContent += `"${saleDate}",${totalProfit.toFixed(2)},${sale.totalCost.toFixed(2)},${sale.totalPrice.toFixed(2)},"${observations}","${productsString}"\n`;
                 });
 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -705,7 +736,7 @@
                 document.body.removeChild(link);
             }
 
-            // Función para importar datos desde un archivo CSV
+            // Función para importar datos desde un archivo CSV de inventario
             function importFromCsv(file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -730,7 +761,7 @@
                                     quantity: parseInt(quantity, 10)
                                 });
                             } else {
-                                console.error("Fila del CSV con formato incorrecto:", row);
+                                console.error("Fila del CSV de inventario con formato incorrecto:", row);
                             }
                         }
                     }
@@ -742,6 +773,57 @@
                 };
                 reader.readAsText(file);
             }
+            
+            // Función para importar datos desde un archivo CSV de historial de ventas
+            function importSalesFromCsv(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    const rows = text.split('\n');
+
+                    const newSalesItems = [];
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i].trim();
+                        if (row) {
+                            const parts = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+                            if (parts && parts.length === 6) {
+                                const [date, totalProfit, totalCost, totalPrice, observations, productsString] = parts.map(part => part.trim().replace(/^"|"$/g, ''));
+                                
+                                const products = [];
+                                const productParts = productsString.split(';').map(p => p.trim()).filter(p => p !== '');
+                                
+                                productParts.forEach(productPart => {
+                                    // Usamos una expresión regular para extraer nombre, SKU y cantidad
+                                    const match = productPart.match(/(.*) \(SKU: (.*?), Cantidad: (\d+)\)/);
+                                    if (match) {
+                                        products.push({
+                                            name: match[1],
+                                            sku: match[2],
+                                            quantity: parseInt(match[3], 10),
+                                        });
+                                    }
+                                });
+
+                                newSalesItems.push({
+                                    date,
+                                    observations,
+                                    products,
+                                    totalCost: parseFloat(totalCost),
+                                    totalPrice: parseFloat(totalPrice),
+                                });
+                            } else {
+                                console.error("Fila del CSV de ventas con formato incorrecto:", row);
+                            }
+                        }
+                    }
+                    salesData = newSalesItems;
+                    saveDataToLocalStorage();
+                    renderSales();
+                    showMessage('¡Historial de ventas importado con éxito!');
+                };
+                reader.readAsText(file);
+            }
+
 
             // --- Manejo de eventos ---
             
@@ -844,11 +926,19 @@
             // Escucha el clic en el botón de exportar historial de ventas
             exportSalesCsvBtn.addEventListener('click', exportSalesToCsv);
 
-            // Escucha el cambio en el input de archivo para importar
+            // Escucha el cambio en el input de archivo para importar inventario
             importCsvInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
                     importFromCsv(file);
+                }
+            });
+            
+            // Escucha el cambio en el input de archivo para importar historial de ventas
+            importSalesCsvInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    importSalesFromCsv(file);
                 }
             });
 
