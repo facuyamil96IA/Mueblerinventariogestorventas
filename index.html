@@ -342,14 +342,32 @@
         .edit-button:hover {
             background-color: #d97706;
         }
+        
+        .edit-sale-button {
+            background-color: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            padding: 6px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .edit-sale-button:hover {
+            background-color: #4f46e5;
+        }
 
         /* Oculta los elementos al editar */
-        .inventory-item[data-editing="true"] .item-content {
+        .inventory-item[data-editing="true"] .item-content,
+        .sales-item[data-editing="true"] .item-content {
             display: none;
         }
         
         /* Muestra el formulario al editar */
-        .inventory-item[data-editing="true"] .edit-form {
+        .inventory-item[data-editing="true"] .edit-form,
+        .sales-item[data-editing="true"] .edit-form {
             display: flex;
         }
         
@@ -693,23 +711,101 @@
             function createSalesItemElement(sale) {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'sales-item';
+                // Usamos la fecha como un identificador único para la venta
+                itemDiv.dataset.id = sale.date;
+                itemDiv.dataset.editing = 'false';
+
                 const totalProfit = (sale.totalPrice - sale.totalCost).toFixed(2);
+
                 itemDiv.innerHTML = `
-                    <div class="item-header">
-                        <span class="item-name">Venta</span>
-                        <span class="item-sku">${new Date(sale.date).toLocaleString()}</span>
+                    <!-- Contenido de visualización normal -->
+                    <div class="item-content">
+                        <div class="item-header">
+                            <span class="item-name">Venta</span>
+                            <span class="item-sku">${new Date(sale.date).toLocaleString()}</span>
+                        </div>
+                        <div class="item-details show">
+                            <p><strong>Productos vendidos:</strong></p>
+                            <ul>
+                                ${sale.products.map(p => `<li>- ${p.name} (SKU: ${p.sku}) x${p.quantity}</li>`).join('')}
+                            </ul>
+                            <p><strong>Ganancia total:</strong> $${totalProfit}</p>
+                            ${sale.observations ? `<p><strong>Observaciones:</strong> ${sale.observations}</p>` : ''}
+                        </div>
+                        <div class="item-actions mt-4 flex justify-end gap-2">
+                            <button type="button" class="edit-sale-button">Editar</button>
+                            <button type="button" class="delete-button text-red-500 hover:text-red-700">Eliminar</button>
+                        </div>
                     </div>
-                    <div class="item-details show">
-                        <p><strong>Productos vendidos:</strong></p>
-                        <ul>
-                            ${sale.products.map(p => `<li>- ${p.name} (SKU: ${p.sku}) x${p.quantity}</li>`).join('')}
-                        </ul>
-                        <p><strong>Ganancia total:</strong> $${totalProfit}</p>
-                        ${sale.observations ? `<p><strong>Observaciones:</strong> ${sale.observations}</p>` : ''}
-                    </div>
+                    
+                    <!-- Formulario de edición (inicialmente oculto) -->
+                    <form class="edit-form sales-edit-form">
+                        <h3 class="font-bold mb-2">Editar Venta del ${new Date(sale.date).toLocaleString()}</h3>
+                        <div class="edit-sales-items-container">
+                            <!-- Los campos de productos se inyectarán aquí -->
+                        </div>
+                        <button type="button" class="add-sales-item-btn bg-gray-200 text-gray-800 hover:bg-gray-300 px-4 py-2 rounded-full mt-2">
+                            Añadir otro artículo
+                        </button>
+                        <div class="form-group mt-4">
+                            <label for="edit-sales-observations-${sale.date}">Observaciones</label>
+                            <textarea id="edit-sales-observations-${sale.date}" class="form-textarea" rows="3">${sale.observations || ''}</textarea>
+                        </div>
+                        <div class="edit-form-actions mt-4">
+                            <button type="button" class="cancel-button">Cancelar</button>
+                            <button type="submit" class="save-button">Guardar</button>
+                        </div>
+                    </form>
                 `;
                 return itemDiv;
             }
+
+            // Función auxiliar para crear los campos de selección de productos para el formulario de venta
+            function createSalesItemInputs(item, index, container, isEditForm = false) {
+                const newSalesItemDiv = document.createElement('div');
+                newSalesItemDiv.className = 'form-group flex-row items-center gap-2 mt-2';
+                newSalesItemDiv.dataset.index = index;
+
+                const selectId = `itemSelect-${isEditForm ? 'edit-' : ''}${index}`;
+                const quantityId = `itemQuantity-${isEditForm ? 'edit-' : ''}${index}`;
+                
+                let optionsHtml = '<option value="" disabled>Selecciona un producto</option>';
+                inventoryData.forEach(invItem => {
+                    // Si estamos en el formulario de edición, necesitamos incluir el producto que ya estaba seleccionado, incluso si su stock es 0
+                    const isSelected = item && (item.name === invItem.name && item.sku === invItem.sku);
+                    if (invItem.quantity > 0 || isSelected) {
+                        const selectedAttribute = isSelected ? 'selected' : '';
+                        optionsHtml += `<option value="${invItem.id}" ${selectedAttribute}>${invItem.name} (SKU: ${invItem.sku}, Cantidad: ${invItem.quantity + (isSelected ? item.quantity : 0)})</option>`;
+                    }
+                });
+
+                newSalesItemDiv.innerHTML = `
+                    <label for="${selectId}" class="sr-only">Producto</label>
+                    <select id="${selectId}" class="form-select w-full" required>
+                        ${optionsHtml}
+                    </select>
+                    <label for="${quantityId}" class="sr-only">Cantidad</label>
+                    <input type="number" id="${quantityId}" class="form-input w-20" value="${item ? item.quantity : '1'}" min="1" required>
+                    <button type="button" class="delete-sales-item-btn text-gray-500 hover:text-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                `;
+                container.appendChild(newSalesItemDiv);
+                
+                // Actualizar la cantidad si es un formulario de edición
+                if (isEditForm && item) {
+                    const selectElement = newSalesItemDiv.querySelector('select');
+                    const quantityElement = newSalesItemDiv.querySelector('input');
+                    const inventoryItem = inventoryData.find(inv => inv.name === item.name && inv.sku === item.sku);
+                    if (inventoryItem) {
+                         selectElement.value = inventoryItem.id;
+                    }
+                    quantityElement.value = item.quantity;
+                }
+            }
+
 
             // Función para cambiar de pestaña
             function switchTab(tabId) {
@@ -1028,6 +1124,153 @@
                     }
                 }
             });
+            
+            // Escucha los clics en la lista de ventas para delegar eventos
+            salesList.addEventListener('click', function(e) {
+                const target = e.target;
+                const saleElement = target.closest('.sales-item');
+                if (!saleElement) return;
+
+                const saleDateId = saleElement.dataset.id;
+                const saleIndex = salesData.findIndex(sale => sale.date === saleDateId);
+
+                if (saleIndex === -1) return;
+
+                if (target.classList.contains('edit-sale-button')) {
+                    // Pre-popular el formulario de edición y mostrarlo
+                    saleElement.dataset.editing = 'true';
+                    const editFormContainer = saleElement.querySelector('.edit-sales-items-container');
+                    const saleToEdit = salesData[saleIndex];
+                    editFormContainer.innerHTML = ''; // Limpiar campos existentes
+                    
+                    saleToEdit.products.forEach((product, index) => {
+                        createSalesItemInputs(product, index, editFormContainer, true);
+                    });
+                } else if (target.classList.contains('cancel-button')) {
+                    saleElement.dataset.editing = 'false';
+                    renderSales(); // Re-renderizar para revertir cambios en UI
+                } else if (target.classList.contains('delete-button')) {
+                    const saleToRemove = salesData[saleIndex];
+                    // Devolver los productos al inventario
+                    saleToRemove.products.forEach(soldProduct => {
+                        const invItem = inventoryData.find(item => item.name === soldProduct.name && item.sku === soldProduct.sku);
+                        if (invItem) {
+                            invItem.quantity += soldProduct.quantity;
+                        }
+                    });
+                    
+                    salesData.splice(saleIndex, 1);
+                    saveDataToLocalStorage();
+                    renderSales();
+                    renderInventory();
+                    populateSalesItems();
+                    showMessage('¡Venta eliminada!');
+                } else if (target.classList.contains('add-sales-item-btn')) {
+                    const editFormContainer = saleElement.querySelector('.edit-sales-items-container');
+                    createSalesItemInputs(null, editFormContainer.children.length, editFormContainer, true);
+                } else if (e.target.closest('.delete-sales-item-btn')) {
+                    const itemDiv = e.target.closest('.form-group');
+                    if (itemDiv) {
+                        itemDiv.remove();
+                    }
+                }
+            });
+
+            salesList.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const target = e.target;
+                if (!target.classList.contains('sales-edit-form')) return;
+
+                const saleElement = target.closest('.sales-item');
+                const saleDateId = saleElement.dataset.id;
+                const saleIndex = salesData.findIndex(sale => sale.date === saleDateId);
+                const saleToUpdate = salesData[saleIndex];
+                
+                const oldProducts = [...saleToUpdate.products];
+                const newProducts = [];
+                let newTotalCost = 0;
+                let newTotalPrice = 0;
+                let isValidUpdate = true;
+
+                const salesItemInputs = saleElement.querySelectorAll('.edit-sales-items-container .form-group');
+
+                for (const itemInput of salesItemInputs) {
+                    const select = itemInput.querySelector('select');
+                    const quantityInput = itemInput.querySelector('input[type="number"]');
+
+                    if (!select || !quantityInput || !select.value || parseInt(quantityInput.value, 10) <= 0) {
+                        isValidUpdate = false;
+                        continue;
+                    }
+                    
+                    const itemId = parseInt(select.value, 10);
+                    const quantityToSell = parseInt(quantityInput.value, 10);
+                    const inventoryItem = inventoryData.find(item => item.id === itemId);
+
+                    if (!inventoryItem) {
+                        isValidUpdate = false;
+                        break;
+                    }
+
+                    // Encontrar el producto anterior en el array de la venta
+                    const oldProduct = oldProducts.find(p => p.name === inventoryItem.name && p.sku === inventoryItem.sku);
+                    const oldQuantity = oldProduct ? oldProduct.quantity : 0;
+                    const quantityDifference = quantityToSell - oldQuantity;
+
+                    if (quantityDifference > 0 && quantityDifference > inventoryItem.quantity) {
+                        showErrorMessage(`No hay suficiente stock de ${inventoryItem.name}. Stock actual: ${inventoryItem.quantity}`);
+                        isValidUpdate = false;
+                        break;
+                    }
+
+                    newProducts.push({
+                        name: inventoryItem.name,
+                        sku: inventoryItem.sku,
+                        quantity: quantityToSell,
+                        cost: inventoryItem.cost,
+                        price: inventoryItem.price,
+                    });
+
+                    newTotalCost += inventoryItem.cost * quantityToSell;
+                    newTotalPrice += inventoryItem.price * quantityToSell;
+                }
+
+                if (isValidUpdate && newProducts.length > 0) {
+                    // Primero, devolver el stock de la venta original
+                    oldProducts.forEach(oldProduct => {
+                         const invItem = inventoryData.find(item => item.name === oldProduct.name && item.sku === oldProduct.sku);
+                         if (invItem) {
+                             invItem.quantity += oldProduct.quantity;
+                         }
+                    });
+                    
+                    // Luego, restar el stock de la nueva venta
+                    newProducts.forEach(newProduct => {
+                        const invItem = inventoryData.find(item => item.name === newProduct.name && item.sku === newProduct.sku);
+                        if (invItem) {
+                            invItem.quantity -= newProduct.quantity;
+                        }
+                    });
+
+                    saleToUpdate.products = newProducts;
+                    saleToUpdate.totalCost = newTotalCost;
+                    saleToUpdate.totalPrice = newTotalPrice;
+                    saleToUpdate.observations = document.getElementById(`edit-sales-observations-${saleDateId}`).value.trim();
+
+                    saveDataToLocalStorage();
+                    renderSales();
+                    renderInventory();
+                    populateSalesItems();
+                    showMessage('¡Venta actualizada con éxito!');
+                } else {
+                    // Si la actualización falla, revertir el inventario
+                    renderSales();
+                    renderInventory();
+                    populateSalesItems();
+                    saleElement.dataset.editing = 'false';
+                }
+            });
+
 
             // Escucha el evento 'input' del campo de búsqueda para filtrar la lista
             searchInput.addEventListener('input', function(e) {
@@ -1063,24 +1306,7 @@
 
             // Maneja el clic en el botón para añadir otro artículo a la venta
             addSalesItemBtn.addEventListener('click', () => {
-                const newSalesItemDiv = document.createElement('div');
-                newSalesItemDiv.className = 'form-group flex-row items-center gap-2 mt-2';
-                newSalesItemDiv.innerHTML = `
-                    <label for="itemSelect-${salesItemCount}" class="sr-only">Producto</label>
-                    <select id="itemSelect-${salesItemCount}" class="form-select w-full" required>
-                        <option value="" disabled selected>Selecciona un producto</option>
-                    </select>
-                    <label for="itemQuantity-${salesItemCount}" class="sr-only">Cantidad</label>
-                    <input type="number" id="itemQuantity-${salesItemCount}" class="form-input w-20" value="1" min="1" required>
-                    <button type="button" class="delete-sales-item-btn text-gray-500 hover:text-red-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                `;
-                salesItemsContainer.appendChild(newSalesItemDiv);
-                populateSalesItems();
-                salesItemCount++;
+                createSalesItemInputs(null, salesItemsContainer.children.length, salesItemsContainer);
             });
 
             // Maneja la eliminación de un artículo del formulario de ventas
